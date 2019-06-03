@@ -15,7 +15,7 @@
   <script type="text/javascript" src="../jsp/bootstrap/js/bootstrap.min.js"></script>
   <script type="text/javascript" src="../jsp/Vue.js"></script>
   <style>
-		#logoDiv{
+		#logoDiv {
       width:100%;
       height:80px;
       background-image:url('<%=request.getContextPath()%>/jsp/logowaho.jpg'); 
@@ -73,7 +73,6 @@
     .btn-language{
       margin-right:0px;
     }
-    
 	</style>
 </head>
 <body>
@@ -354,6 +353,7 @@
           </div><!-- /.modal-content -->
       </div><!-- /.modal -->
   </div>
+  
   <!-- promptM模态框（Modal） -->
   <div class="modal fade" id="promptM" tabindex="-1" role="dialog" aria-labelledby="promptMLabel" aria-hidden="true">
       <div class="modal-dialog">
@@ -1028,11 +1028,10 @@
 </body>
 <!-- <script type="text/javascript" src="index.js"></script> -->
 <script type="text/javascript">
-
-// var localhost = "114.115.155.187";
-// var localhost = "localhost";
-var localhost = "<%=request.getContextPath()%>";
-// var languageFlag = 1;
+ //var localhost = "114.115.155.187";
+ // var localhost = "localhost";
+ // var languageFlag = 1;
+ var localhost = "<%=request.getContextPath()%>";
 
 /*********************对象构造方法*********************/
 function Dev(devName, macAddr, devNet) {//集控器
@@ -2666,6 +2665,7 @@ function intervalRefresh() {
     datatype: "json",
     success:function(datasource, textStatus, jqXHR) {
       var data = eval('(' + datasource + ')');
+    	//alert("json:"+data);
       if (data.error == null || data.error == "" || data.error == undefined) {//未出错
         userDataRefresh(user, data);//调用数据更新函数
       } else {

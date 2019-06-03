@@ -32,7 +32,7 @@ import com.test.service.IUserService;
 
 @Service()
 public class UserServiceImpl implements IUserService {
-
+	//按照类型注入
 	@Autowired
 	private UserMapper userDao;
 	@Autowired
@@ -64,13 +64,14 @@ public class UserServiceImpl implements IUserService {
 		return userDao.selectByUsername(username);
 	}
 	
+	//refresh
 	public DataObject getDataByUser(User user) {
 		DataObject data = new DataObject();
 		data.setUser(user);
 		data.setDevArr(devDao.selectByUserid(user.getId()));
 		data.setZigbeeArr(new ArrayList<Zigbee>());
 		for (Device dev : data.getDevArr()) {
-			data.getZigbeeArr().addAll(zigbeeDao.selectBydevMac(dev.getDevMac()));
+			data.getZigbeeArr().addAll(zigbeeDao.selectBydevMac(dev.getDevMac()));  //zigbee<List>
 		}
 		data.setGroupArr(groupDao.selectByUserid(user.getId()));
 		data.setGroupPairArr(groupPairDao.selectByUserid(user.getId()));
@@ -108,6 +109,7 @@ public class UserServiceImpl implements IUserService {
 		return data;
 	}
 	
+	//addDev
 	public DataObject addDevToUser(Integer userid, String devMac) {
 		User user = userDao.selectByPrimaryKey(userid);
 		Device dev = devDao.selectByPrimaryKey(devMac);

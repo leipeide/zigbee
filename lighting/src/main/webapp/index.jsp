@@ -8,7 +8,7 @@
 </head>
 <body>
 	<form name="testform">
-		<jsp:forward page="jsp/login.jsp" />
+		<jsp:forward page="jsp/login2.jsp" />
 		<%-- <jsp:forward page="WEB-INF/index.html" /> --%>
 	</form>
 </body>

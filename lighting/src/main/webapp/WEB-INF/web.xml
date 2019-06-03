@@ -8,6 +8,8 @@
 		<param-name>contextConfigLocation</param-name>
 		<param-value>classpath:spring-mybatis.xml</param-value>
 	</context-param>
+	
+	<!-- 字符集过滤器 -->
 	<filter>
 		<filter-name>encodingFilter</filter-name>
 		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
@@ -21,12 +23,16 @@
 		<filter-name>encodingFilter</filter-name>
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
+	
+	 <!-- Spring监听器 --> 
 	<listener>
 		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
 	</listener>
 	<listener>
 		<listener-class>org.springframework.web.util.IntrospectorCleanupListener</listener-class>
 	</listener>
+	
+	 <!-- Spring MVC servlet   配置前端控制器：DispatcherServlet-->  
 	<servlet>
 		<servlet-name>lighting</servlet-name>
 		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
@@ -39,11 +45,14 @@
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>lighting</servlet-name>
-		<url-pattern>*.do</url-pattern>
+		<url-pattern>*.do</url-pattern> <!-- 此处可以可以配置成*.do，对应struts的后缀习惯 --> 
 	</servlet-mapping>
+	
 	<listener>
 		<listener-class>com.test.service.socket.SocketServiceLoader</listener-class>
 	</listener>
+	
+	<!-- 用来指定首页文件名称 -->
 	<welcome-file-list>
 		<welcome-file>index.jsp</welcome-file>
 	</welcome-file-list>

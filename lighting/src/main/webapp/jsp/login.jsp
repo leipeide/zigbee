@@ -22,7 +22,6 @@
 	</style>
 </head>
 <body>
-	
 	<div style="padding: 15em" class="col-sm-12" id="mainDiv">
 		<form class="form-horizontal" role="form" name="mainform" action="<%=request.getContextPath()%>/user/login.do" method="post">
 			<div class="form-group">
@@ -76,12 +75,13 @@
 </body>
 <script type="text/javascript">
 	var localhost = "<%=request.getContextPath()%>";
+    //var localhost = "114.115.155.187";
+ 	//var localhost = "localhost";
 	var emailReg = /^[a-z0-9]+([._\\-]*[a-z0-9])*@([a-z0-9]+[-a-z0-9]*[a-z0-9]+.){1,63}[a-z0-9]+/;//判断邮箱地址合法正则
 	var flags = {};
 	flags.hidden = true;
 	flags.password = mainform.password.value;
 	flags.passwordRepeat = mainform.passwordRepeat.value;
-
 	flags.error = null;
 
 	var jsonStr = '<%=request.getAttribute("responseJson")%>';
@@ -141,6 +141,7 @@
 						}
 					});
 				}
+				
 			},
 			login: function(event) {
 				if (flags.hidden == false) {

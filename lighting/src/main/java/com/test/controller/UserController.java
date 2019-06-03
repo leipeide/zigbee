@@ -46,7 +46,8 @@ public class UserController {
 		log.info("server to " + ds.getDevice().getDevMac() + ": " + cmd);
 	}
 
-	@Resource
+	@Resource 
+	//按照名称注入
 	private IUserService userService;
 
 	@RequestMapping("/socketTest")
@@ -108,7 +109,7 @@ public class UserController {
 		}
 	}
 	
-	@RequestMapping("/LOGIN") //新登录界面
+	@RequestMapping("/LOGIN") //新登录界面,新增页面,跳转至index.html
 	public String LOGIN(HttpServletRequest request, HttpServletResponse response) {
 		String username = request.getParameter("username");
 
@@ -133,7 +134,6 @@ public class UserController {
 			} else {
 
 				DataObject data = new DataObject();
-
 				data.setError("用户名或密码错误!");
 
 				response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
@@ -152,7 +152,7 @@ public class UserController {
 
 	@RequestMapping("/login") // 登录
 	public String login(HttpServletRequest request, Model model) {
-
+		System.out.println("进入login");
 		String username = request.getParameter("username");
 
 		String password = request.getParameter("password");
@@ -162,14 +162,16 @@ public class UserController {
 
 			if (user != null && username.equals(user.getUsername()) && password.equals(user.getPassword())) {
 
-				DataObject data = userService.getDataByUser(user);
+				DataObject data = userService.getDataByUser(user); ///携带查询到的数据到达首页
 
 				String myJson = JSONObject.toJSONString(data);
 
 				model.addAttribute("responseJson", myJson);
-
-				// return "/WEB-INF/index.html";
-				return "/jsp/index.jsp";
+				//System.out.println("loginServlet:"+myJson);
+				 //return "/WEB-INF/index.html";
+				//return "/jsp/index.jsp";
+				return "/jsp/index1.jsp";
+				
 			} else {
 
 				DataObject data = new DataObject();
@@ -179,8 +181,9 @@ public class UserController {
 				String myJson = JSONObject.toJSONString(data);
 
 				model.addAttribute("responseJson", myJson);
-
-				return "/jsp/login.jsp";
+				//System.out.println("loginServlet:"+JSONObject.toJSONString(data));
+				//return "/jsp/login.jsp";  // 原版为login.jsp
+				return "/jsp/login2.jsp";   //修改版为login2.jsp
 			}
 		}
 		return null;
@@ -188,6 +191,7 @@ public class UserController {
 
 	@RequestMapping("/regist") // 注册
 	public void regist(HttpServletRequest request, HttpServletResponse response) {
+		//System.out.println("进入注册");
 		String username = request.getParameter("username");
 		String password = request.getParameter("password");
 		String email = request.getParameter("email");
@@ -196,6 +200,7 @@ public class UserController {
 		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
 		try {
 			response.getWriter().write(JSONObject.toJSONString(data));
+			System.out.println(JSONObject.toJSONString(data));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -1522,4 +1527,17 @@ public class UserController {
 		}
 		return groupaddr;
 	}
+	/*
+	@RequestMapping("/allDeviceTable")
+	public void allDeviceTable(HttpServletRequest request, HttpServletResponse response) {
+		Integer userid = Integer.parseInt(request.getParameter("userid"));
+		DataObject data = userService.getDataByUser(userService.getUserById(userid));
+		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
+		try {
+			response.getWriter().write(JSONObject.toJSONString(data));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}*/
 }
