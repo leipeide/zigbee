@@ -37,7 +37,7 @@ html {
 <body class="layui-layout-body">
 	<div class="layui-row main-form-div">
 		<div class="layui-col-xs1 layui-col-sm3 layui-col-md4">
- 			<div class="grid-demo layui-bg-red">移动：1/12 | 平板：3/12 | 桌面：4/12</div> 
+ 			<div class="grid-demo layui-bg-red" style="visibility:hidden">移动：1/12 | 平板：3/12 | 桌面：4/12</div> 
 		</div>
 		<div class="layui-col-xs10 layui-col-sm6 layui-col-md4">
 			<div class="grid-demo layui-bg-#F0F0F0">
@@ -128,7 +128,7 @@ html {
 			</div>
 		</div>
 		<div class="layui-col-xs1 layui-col-sm3 layui-col-md4">
- 			<div class="grid-demo layui-bg-blue">移动：1/12 | 平板：3/12 | 桌面：4/12</div>
+ 			<div class="grid-demo layui-bg-blue" style="visibility:hidden">移动：1/12 | 平板：3/12 | 桌面：4/12</div>
 		</div>
 	</div>
 

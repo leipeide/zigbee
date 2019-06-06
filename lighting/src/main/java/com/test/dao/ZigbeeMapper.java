@@ -2,6 +2,8 @@ package com.test.dao;
 
 import java.util.ArrayList;
 
+import org.apache.ibatis.annotations.Param;
+
 import com.test.domain.Zigbee;
 
 public interface ZigbeeMapper {
@@ -22,4 +24,10 @@ public interface ZigbeeMapper {
     int updateByPrimaryKey(Zigbee record);
     
     int updateBydevMacSelectiveWhereOnline(Zigbee record);
+    
+    int selectZigbeeNumberByDeviceMac(@Param("devMac")String devMac);
+    
+	int selectZigbeeNumberByDeviceMacAndOnlineStatus(@Param("devMac") String devMac,
+			@Param("zigbeeNet")Integer zigbeeNet);
+    
 }
