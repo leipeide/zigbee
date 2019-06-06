@@ -3,6 +3,8 @@ package com.test.controller;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.TimerTask;
 
 import javax.annotation.Resource;
@@ -243,7 +245,7 @@ public class UserController {
 	@RequestMapping("/addDev") // 用户添加集控器
 	// 如果有该设备,返回所有用户数据（相当于刷新）
 	public void addDev(HttpServletRequest request, HttpServletResponse response) {
-
+		System.out.println("addDev"+request.getParameter("devMac")+request.getParameter("userid"));
 		String devMac = request.getParameter("devMac");
 
 		Integer userid = Integer.parseInt(request.getParameter("userid"));
@@ -275,7 +277,7 @@ public class UserController {
 	@RequestMapping("/removeDev") // 用户删除集控器
 	// 如果修改成功，返回所有用户数据（相当于刷新）
 	public void removeDev(HttpServletRequest request, HttpServletResponse response) {
-
+		System.out.println("removeDEV"+request.getParameter("devMac")+request.getParameter("userid"));
 		String devMac = request.getParameter("devMac");
 
 		Integer userid = Integer.parseInt(request.getParameter("userid"));
@@ -297,6 +299,7 @@ public class UserController {
 	@RequestMapping("/renameDev") // 集控器重命名
 	// 如果修改成功，返回空
 	public void renameDev(HttpServletRequest request, HttpServletResponse response) {
+		System.out.println("进入renameDev:"+request.getParameter("devMac")+request.getParameter("devNewName"));
 
 		String devMac = request.getParameter("devMac");
 
@@ -1527,17 +1530,23 @@ public class UserController {
 		}
 		return groupaddr;
 	}
-	/*
+	
 	@RequestMapping("/allDeviceTable")
 	public void allDeviceTable(HttpServletRequest request, HttpServletResponse response) {
-		Integer userid = Integer.parseInt(request.getParameter("userid"));
-		DataObject data = userService.getDataByUser(userService.getUserById(userid));
-		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
-		try {
-			response.getWriter().write(JSONObject.toJSONString(data));
+		System.out.println("nihoaa");
+		Map map = new HashMap(); 
+		 /*
+		  map.put("code", "0"); 
+		  map.put("msg", ""); 
+		  map.put("count","1000"); 
+		  map.put("data", "{\"id\":10000,\"username\":\"user-0\",\"sex\":\"女\",\"city\":\"城市-0\",\"sign\":\"签名-0\",\"experience\":255,\"logins\":24,\"wealth\":82830700,\"classify\":\"作家\",\"score\":57},{\"id\":10001,\"username\":\"user-1\",\"sex\":\"男\",\"city\":\"城市-1\",\"sign\":\"签名-1\",\"experience\":884,\"logins\":58,\"wealth\":64928690,\"classify\":\"词人\",\"score\":27},{\"id\":10002,\"username\":\"user-2\",\"sex\":\"女\",\"city\":\"城市-2\",\"sign\":\"签名-2\",\"experience\":650,\"logins\":77,\"wealth\":6298078,\"classify\":\"酱油\",\"score\":31},{\"id\":10003,\"username\":\"user-3\",\"sex\":\"女\",\"city\":\"城市-3\",\"sign\":\"签名-3\",\"experience\":362,\"logins\":157,\"wealth\":37117017,\"classify\":\"诗人\",\"score\":68},{\"id\":10004,\"username\":\"user-4\",\"sex\":\"男\",\"city\":\"城市-4\",\"sign\":\"签名-4\",\"experience\":807,\"logins\":51,\"wealth\":76263262,\"classify\":\"作家\",\"score\":6},{\"id\":10005,\"username\":\"user-5\",\"sex\":\"女\",\"city\":\"城市-5\",\"sign\":\"签名-5\",\"experience\":173,\"logins\":68,\"wealth\":60344147,\"classify\":\"作家\",\"score\":87},{\"id\":10006,\"username\":\"user-6\",\"sex\":\"女\",\"city\":\"城市-6\",\"sign\":\"签名-6\",\"experience\":982,\"logins\":37,\"wealth\":57768166,\"classify\":\"作家\",\"score\":34},"); 
+		  */
+		  try {
+			response.getWriter().write(JSONObject.toJSONString(map));
+			  //response.getWriter().write();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}*/
+	}
 }
