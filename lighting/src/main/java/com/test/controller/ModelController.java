@@ -45,7 +45,7 @@ public class ModelController {
 		String userid = request.getParameter("userid");
 		String page = request.getParameter("page");
 		String limit = request.getParameter("limit");
-		System.out.println("userid=" + userid + "  page=" + page + "  limit=" + limit);
+//		System.out.println("userid=" + userid + "  page=" + page + "  limit=" + limit);
 		if (userid == null || page == null || limit== null) {
 			LayuiTableModel model = new LayuiTableModel();
 			model.setCode(2);
@@ -60,7 +60,7 @@ public class ModelController {
 		}
 		LayuiTableModel ltmodel = modelService.getDeviceTableDataByUserid(Integer.parseInt(userid), Integer.parseInt(page), Integer.parseInt(limit));
 		String dataJson = JSONObject.toJSONString(ltmodel);
-		System.out.println(dataJson);
+//		System.out.println(dataJson);
 		try {
 			response.getWriter().write(dataJson);
 		} catch (IOException e) {

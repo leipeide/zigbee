@@ -49,7 +49,7 @@ public class ModelServiceImpl implements IModelService {
 	@Override
 	public LayuiTableModel getDeviceTableDataByUserid(int userid, int page, int limit) {
 		LayuiTableModel ltModel = new LayuiTableModel();
-		LinkedList<LayuiDeviceModel> devModelList = new LinkedList<LayuiDeviceModel>();
+		LinkedList<Object> devModelList = new LinkedList<Object>();
 		// 第一步，查询页数
 		ltModel.setCount(devDao.selectDeviceNumberOfUser(userid));
 		int pageCount = ltModel.getCount() / limit;
@@ -82,10 +82,9 @@ public class ModelServiceImpl implements IModelService {
 		}
 		// 第四步，返回数据
 		ltModel.setCount(devModelList.size());
-		List<Object> result = new LinkedList<>();
-		Collections.addAll(result, devModelList);
-		ltModel.setData(result);
-		
+//		List<Object> result = new LinkedList<>();
+//		Collections.addAll(result, devModelList);
+		ltModel.setData(devModelList);
 		return ltModel;
 	}
 
