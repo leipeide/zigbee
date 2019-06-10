@@ -29,5 +29,7 @@ public interface ZigbeeMapper {
     
 	int selectZigbeeNumberByDeviceMacAndOnlineStatus(@Param("devMac") String devMac,
 			@Param("zigbeeNet")Integer zigbeeNet);
+
+	ArrayList<Zigbee> selectByDevMacPaged(@Param("devMac")String devMac, @Param("index")int index, @Param("limit")int limit);
     
 }

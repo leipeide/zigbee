@@ -2,6 +2,8 @@ package com.test.dao;
 
 import java.util.ArrayList;
 
+import org.apache.ibatis.annotations.Param;
+
 import com.test.domain.GroupPair;
 
 public interface GroupPairMapper {
@@ -22,4 +24,8 @@ public interface GroupPairMapper {
     int updateByPrimaryKeySelective(GroupPair record);
 
     int updateByPrimaryKey(GroupPair record);
+
+	int selectGroupPairNumberByGroupid(@Param("groupid")int groupid);
+
+	ArrayList<GroupPair> selectByGroupidPaged(@Param("groupid")int groupid, @Param("index")int index, @Param("limit")int limit);
 }

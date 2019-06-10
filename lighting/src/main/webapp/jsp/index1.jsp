@@ -65,14 +65,14 @@
 				</div> 
 				
 				<div id="GroupsDiv"  style="display:none;">
-					<div id="allGroupsDiv"  style="display:block;">你好，我是GroupsDiv
+					<div id="allGroupsDiv"  style="display:none;">你好，我是GroupsDiv
 						<table id="allGroupsTable" lay-filter="allGroupsTableFilter" lay-data="{skin:'line', even:true, size:'sm'}"></table></div>
 					<div id="oneGroupsDiv"  style="display:none;">你好，我是oneGroupsDiv
 						<table id="oneGroupsTable" lay-filter="oneGroupsTableFilter" lay-data="{skin:'line', even:true, size:'sm'}"></table></div>
 				</div> 
 				
 				<div id="PloysDiv"  style="display:none;">
-					<div id="allPloyDiv"  style="display:block;">你好，我是PloysDiv
+					<div id="allPloyDiv"  style="display:none;">你好，我是PloysDiv
 						<table id="allPloysTable" lay-filter="allPloysTableFilter" lay-data="{skin:'line', even:true, size:'sm'}"></table></div>
 					<div id="onePloyDiv"  style="display:none;">你好，我是onePloysDiv
 						<table id="onePloysTable" lay-filter="onePloysTableFilter" lay-data="{skin:'line', even:true, size:'sm'}"></table></div>
@@ -117,14 +117,13 @@
   		</div>
    </script>
    
-	<script  type="text/html" id="barDevice">
-  		<a class="layui-btn layui-btn-xs" lay-event="open">ON</a>
-  		<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="close">OFF</a>
-  		<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="dim">DIM</a>
+	<script  type="text/html" id="barDemo">
+  		<a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+  		<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
   </script>
 
   <script type="text/javascript">
-  		alert("2018");
+  		//alert("2018");
 		//1.获取入口地址
 	    var localhost = "<%=request.getContextPath()%>";
 	    //2.获取登录成功后control返回的数据
@@ -263,13 +262,13 @@
 	    
 	    
 /*********************************控制主体区域*********************************/	    
-	    if(controlDiv.style.display == "block" && GroupsDiv.style.display == "none" &&  PloysDiv.style.display == "none" &&  UserInfo.style.display == "none"){
-	    	//alert("判断allDevicediv");
+	    if(controlDiv.style.display == "block" && GroupsDiv.style.display = "none" &&  PloysDiv.style.display = "none" &&  UserInfo.style.display = "none"){
+	    	alert("判断allDevicediv");
  			showAllDevice();
 	    }
 
 	   function ControllersHide(){
-		  // alert("判断allDevicediv");
+		   alert("判断allDevicediv");
 		   controlDiv.style.display = "block";
 		   GroupsDiv.style.display = "none";
 		   PloysDiv.style.display = "none";
@@ -277,7 +276,7 @@
 		   showAllDevice();
 	   } 
 	   function GroupsHide(){
-		   //alert("判断Groupdiv");
+		   alert("判断Groupdiv");
 		   GroupsDiv.style.display = "block";
 		   controlDiv.style.display = "none";
 		   PloysDiv.style.display = "none";
@@ -285,7 +284,7 @@
 		   showAllGroups();
 	   }
  	   function PloysHide(){
- 		   //alert("判断Ploysdiv");
+ 		   alert("判断Ploysdiv");
 		   PloysDiv.style.display = "block";
  		   GroupsDiv.style.display = "none";
 		   controlDiv.style.display = "none";
@@ -326,10 +325,10 @@
 		}
 		
  		function showAllGroups(){
- 			 //alert("分组个数"+jsonObj.groupArr.length);
+ 			//alert("分组个数"+jsonObj.groupArr.length);
  			leftNavAll.innerHTML = "<a href='javascript:;'onclick='allGroupsTable()'>AllGroups</a>";
  			inner = " ";
- 			for(var i = 0; i < Groups.length; i++){
+ 			for(var i = 0; i < jsonObj.groupArr.length; i++){
  				inner = inner + "<li class='layui-nav-item layui-nav-itemed'><a href='javascript:;' onclick='groupMessage()' name='group'></a></li>";
  			}
  			leftNavOne.innerHTML = inner;
@@ -345,7 +344,7 @@
  			//alert("策略个数"+jsonObj.ployArr.length);
  			leftNavAll.innerHTML = "<a href='javascript:;'onclick='allPloysTable()'>AllPloys</a>";
  			inner = " ";
- 			for(var i = 0; i < Ploy.length; i++){
+ 			for(var i = 0; i < jsonObj.ployArr.length; i++){
  				inner = inner + "<li class='layui-nav-item layui-nav-itemed'><a href='javascript:;' onclick='ployMessage()' name='ploy'></a></li>";
  			}
  			leftNavOne.innerHTML = inner;
@@ -366,35 +365,29 @@
 /*********************************table*********************************/
   /*1.所有集控器表格*/
   function	allDeviceTable(){
-	    //alert("function allDeviceTable");
-	    document.getElementById("nodeDiv").style.display = "none"; //将单个表格数据隐藏
-	    document.getElementById("allDeviceDiv").style.display = "block";
+	 //alert("function allDeviceTable");
   		layui.use(['table','layer'], function(){
 	    	 	 var table = layui.table;
 	    	 	 var layer = layui.layer;
-	    	 	 var userid = User.id;
-	    	 	 var curr = 1;
-	    	 	 var num = 15;
 	    		 table.render({
 	    	   		 elem:'#allDeviceTable'
 	    	   		 ,align:'center'
 	    	   		// ,height: 312
-	    	   		 ,url: localhost + '/model/devices.do' + "?userid=" + userid +"&page="+curr+"&limit="+num//数据接口
-	    	   		 ,request: {
-	    	   		     pageName:'page'//页码的参数名称，默认：page
-	    	   		    ,limitName: 'limit'//每页数据量的参数名，默认：limit
-	    	   		  }
+	    	   		 ,url:localhost+'/user/allDeviceTable.do'
+	    	   		// ,url: localhost + '/user/allDeviceTable.do' +"userid="+jsonObj.user.id //数据接口
 	    	   		 ,toolbar:'#toolbarControllers' 
 	    	   		 ,page: true //开启分页
 	    	   		 ,cols: [[ //表头
-	    	   			  {type:'radio'}
-	    	    		 ,{field: 'devName', title: 'name', width:120}
-	    	     		 ,{field: 'devNet', title: 'status', width:120}
-	    	      		 ,{field: 'onlineNodes', title: 'nodes online', width:120}
-	    	      		 ,{field: 'offlineNodes', title: 'nodes offline', width:120} 
-	    	      		 ,{field: 'zigbeeFinder', title: 'nodes finder', toolbar: '#barZigbeeFinder', width:120} 
-	    	      		 ,{field: 'Broadcast', title: 'broadcast', toolbar: '#barBroadcast', width:180} 
+	    	   			 {type:'radio'}
+	    	   	          //{type:'checkbox'}
+	    	    		 ,{field: 'Name', title: 'name', width:120}
+	    	     		 ,{field: 'Status', title: 'status', width:120}
+	    	      		 ,{field: 'Nodes Online', title: 'nodes online', width:120}
+	    	      		 ,{field: 'Nodes Offline', title: 'nodes offline', width:120} 
+	    	      		 ,{field: 'Nodes Finder', title: 'nodes finder', width:120} 
+	    	      		 ,{field: 'Broadcast', title: 'broadcast', width:120} 
 	    	      		 ,{field: 'allDeviceTable', title: 'allDeviceTable', width:150} 
+// 	    	      	     ,{fixed: 'right', title:'操作', toolbar: '#barDemo', width:150}
 	    	         ]]
 	    	 	 });
   		 	});
@@ -403,7 +396,6 @@
   /*2.所有组表格*/
   function	allGroupsTable(){
 		//alert("functionallGroupsTable");
-	    document.getElementById("oneGroupsDiv").style.display = "none"; //将单个表格数据隐藏
 	  		layui.use(['table'], function(){
 		    	 	 var table = layui.table;
 		    		 table.render({
@@ -411,6 +403,7 @@
 		    	   		 elem:'#allGroupsTable'
 		    	   		 ,height: 312
 		    	   		 ,url:localhost+'/user/allDeviceTable.do'
+		    	   		// ,url: localhost + '/user/allDeviceTable.do' +"userid="+jsonObj.user.id //数据接口
 		    	   		 ,toolbar:'#toolbarGroups'  
 		    	   		 ,page: true //开启分页
 		    	   		 ,cols: [[ //表头
@@ -429,9 +422,6 @@
   /*3.所有策略表格*/
   function	allPloysTable(){
 		//alert("functionallPloysTableTable");
-		document.getElementById("onePloyDiv").style.display = "none"; //将单个ploy表格数据隐藏
-		//document.getElementById("allPloysTable") = " ";//将所有策略表格内容清空，用于重新获取数据；
-		//document.getElementById("onePloysTable") = " ";
 	  		layui.use(['table'], function(){
 		    	 	 var table = layui.table;
 		    		 table.render({
@@ -456,14 +446,12 @@
 	
   /*4.显示单个集控器下节点表格信息*/
   function nodeMessage(){
-	    //alert("nodeMessageTable");
-	    //GroupsDiv.style.display = "none";
-	    //PloysDiv.style.display = "none";
-	    //controlDiv.style.display = "block";
+	    GroupsDiv.style.display = "none";
+	    PloysDiv.style.display = "none";
+	    controlDiv.style.display = "block";
     	document.getElementById("allDeviceDiv").style.display = "none";
     	document.getElementById("nodeDiv").style.display = "block";
-    	//document.getElementById("nodeTable") = " ";
-		//alert("000");
+		alert("nodeMessageTable");
 		layui.use(['table'], function(){
 	    	 	 var table = layui.table;
 	    		 table.render({
@@ -491,10 +479,12 @@
   
   /*5.显示组内表格信息*/
   function groupMessage(){
-		//alert("onegroupMessageTable");
+	    controlDiv.style.display = "none";
+	    PloysDiv.style.display = "none";
+	    GroupsDiv.style.display = "block";
 	    document.getElementById("allGroupsDiv").style.display = "none";
     	document.getElementById("oneGroupsDiv").style.display = "block";
-    	//document.getElementById("oneGroupsTable") = " ";
+		alert("onegroupMessageTable");
 		layui.use(['table'], function(){
 	    	 	 var table = layui.table;
 	    		 table.render({
@@ -520,13 +510,17 @@
     
   /*6.显示单个策略表格信息*/
   function ployMessage(){
-	  	//alert("ployMessageTale");
+	  	//alert("ployMessage");
+	    controlDiv.style.display = "none";
+	    GroupsDiv.style.display = "none";
+	    PloysDiv.style.display = "block";
 	    document.getElementById("allPloyDiv").style.display = "none";
     	document.getElementById("onePloyDiv").style.display = "block";
 		alert("oneployMessageTable");
 		layui.use(['table'], function(){
 	    	 	 var table = layui.table;
 	    		 table.render({
+	    	   	     //skin: 'line' //行边框风格
 	    	   		 elem:'#onePloysTable'
 	    	   		 ,height: 312
 	    	   		 ,url:localhost+'/user/allDeviceTable.do'
