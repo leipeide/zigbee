@@ -154,11 +154,11 @@ public class UserController {
 
 	@RequestMapping("/login") // 登录
 	public String login(HttpServletRequest request, Model model) {
-		System.out.println("进入login");
+		//System.out.println("进入login");
 		String username = request.getParameter("username");
 
 		String password = request.getParameter("password");
-
+		//System.out.println("username:"+username+"password:"+password);
 		if (username != null && password != null) {
 			User user = userService.getUserByName(username);
 
@@ -245,7 +245,7 @@ public class UserController {
 	@RequestMapping("/addDev") // 用户添加集控器
 	// 如果有该设备,返回所有用户数据（相当于刷新）
 	public void addDev(HttpServletRequest request, HttpServletResponse response) {
-		System.out.println("addDev"+request.getParameter("devMac")+request.getParameter("userid"));
+		//System.out.println("addDev"+request.getParameter("devMac")+request.getParameter("userid"));
 		String devMac = request.getParameter("devMac");
 
 		Integer userid = Integer.parseInt(request.getParameter("userid"));
@@ -277,7 +277,7 @@ public class UserController {
 	@RequestMapping("/removeDev") // 用户删除集控器
 	// 如果修改成功，返回所有用户数据（相当于刷新）
 	public void removeDev(HttpServletRequest request, HttpServletResponse response) {
-		System.out.println("removeDEV"+request.getParameter("devMac")+request.getParameter("userid"));
+		//System.out.println("removeDEV"+request.getParameter("devMac")+request.getParameter("userid"));
 		String devMac = request.getParameter("devMac");
 
 		Integer userid = Integer.parseInt(request.getParameter("userid"));
@@ -299,7 +299,7 @@ public class UserController {
 	@RequestMapping("/renameDev") // 集控器重命名
 	// 如果修改成功，返回空
 	public void renameDev(HttpServletRequest request, HttpServletResponse response) {
-		System.out.println("进入renameDev:"+request.getParameter("devMac")+request.getParameter("devNewName"));
+		//System.out.println("进入renameDev:"+request.getParameter("devMac")+request.getParameter("devNewName"));
 
 		String devMac = request.getParameter("devMac");
 
@@ -396,10 +396,10 @@ public class UserController {
 	// 如果修改成功, 返回空
 	public void renameZigbee(HttpServletRequest request, HttpServletResponse response) {
 
+		System.out.println("zigbeeMac :newName:");
 		String zigbeeMac = request.getParameter("zigbeeMac");
 
 		String newName = request.getParameter("newName");
-
 		DataObject data = userService.renameZigbee(zigbeeMac, newName);
 
 		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
@@ -417,7 +417,7 @@ public class UserController {
 	@RequestMapping("/removeZigbee") // 删除离线zigbee节点
 	
 	public void removeZigbee(HttpServletRequest request, HttpServletResponse response) {
-		
+		System.out.println("删除节点removeZigbee");
 		DataObject data = new DataObject();
 		
 		String zigbeeMac = request.getParameter("zigbeeMac");
@@ -474,7 +474,7 @@ public class UserController {
 	public void switchByDev(HttpServletRequest request, HttpServletResponse response) {
 		String devMac = request.getParameter("devMac");
 		String cmd = request.getParameter("cmd");
-
+		//System.out.println("devMac:"+devMac+"cmd:"+cmd);
 		DataObject data = new DataObject();
 
 //		data.setError("该设备离线或您尚未添加该设备!");
@@ -557,6 +557,7 @@ public class UserController {
 	public void setBrightnessByDev(HttpServletRequest request, HttpServletResponse response) {
 		String devMac = request.getParameter("devMac");
 		String brightness = request.getParameter("brightness");
+		System.out.println("devMac:"+devMac+"brightness:"+brightness);
 		int bright = Integer.parseInt(brightness);
 		if (bright > 15) {
 			brightness = Integer.toHexString(bright);
@@ -1533,7 +1534,7 @@ public class UserController {
 	
 	@RequestMapping("/allDeviceTable")
 	public void allDeviceTable(HttpServletRequest request, HttpServletResponse response) {
-		System.out.println("nihoaa");
+		//System.out.println("nihoaa"+request.getParameter("devMac"));
 		Map map = new HashMap(); 
 		 /*
 		  map.put("code", "0"); 

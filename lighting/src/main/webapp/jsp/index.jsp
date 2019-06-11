@@ -1567,6 +1567,7 @@ var devDivVue = new Vue({
       userDivVue.$forceUpdate();
       testDivVue.$forceUpdate();
     },
+    //删除zigbee节点
     removeOfflineZigbee: function (zigbee) {
       userid = this.user.id;
       $.ajax({
@@ -1840,6 +1841,7 @@ var devDivVue = new Vue({
       }
       alertVue.show("Detail message", tempString);
     },
+    //zigbee节点重命名
     renameZigbee: function (zigbee) {
       var callbackFunc = function (newName) {
         if (newName != null && newName != "" && newName.length <= 16) {
