@@ -1,9 +1,7 @@
 package com.test.service.serviceimpl;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +12,6 @@ import com.test.dao.GroupMapper;
 import com.test.dao.GroupPairMapper;
 import com.test.dao.PloyMapper;
 import com.test.dao.PloyOperateMapper;
-import com.test.dao.UserMapper;
 import com.test.dao.ZigbeeAttrMapper;
 import com.test.dao.ZigbeeMapper;
 import com.test.domain.Device;
@@ -34,8 +31,6 @@ import com.test.service.IModelService;
 public class ModelServiceImpl implements IModelService {
 
 	// 按照类型注入
-	@Autowired
-	private UserMapper userDao;
 	@Autowired
 	private DeviceMapper devDao;
 	@Autowired
@@ -88,9 +83,6 @@ public class ModelServiceImpl implements IModelService {
 			ltModel.setMsg("数据读取越界！");
 		}
 		// 第四步，返回数据
-		ltModel.setCount(devModelList.size());
-		// List<Object> result = new LinkedList<>();
-		// Collections.addAll(result, devModelList);
 		ltModel.setData(devModelList);
 		return ltModel;
 	}
@@ -108,7 +100,30 @@ public class ModelServiceImpl implements IModelService {
 		// 第二步，判断页面是否越界
 		if (0 < page && page <= pageCount) {
 			// 分页查找数据
-			ArrayList<Zigbee> zigbeeList = zigbeeDao.selectByDevMacPaged(devMac, (page - 1) * limit, limit);
+			// 查询在线节点数量
+			int onlineNum = zigbeeDao.selectZigbeeNumberByDeviceMacAndOnlineStatus(devMac, 1);
+			ArrayList<Zigbee> onlineList = null;
+			ArrayList<Zigbee> offlineList = null;
+			// 如果在线节点数量足够填充页面
+			if ((page - 1) * limit < onlineNum) {
+				onlineList = zigbeeDao.selectByDevMacAndOnlineStatusPaged(devMac, 1, (page - 1) * limit, limit);
+				// 如果在线节点数量只够填充页面一部分
+				if (onlineList.size() < limit) {
+					offlineList = zigbeeDao.selectByDevMacAndOnlineStatusPaged(devMac, 0, 0, limit-onlineList.size());
+				}
+			} else {
+				// 如果查询页数超过在线节点数量能填充的页数，返回离线数据
+				int offlineIndex = (page - 1) * limit - onlineNum;
+				offlineList = zigbeeDao.selectByDevMacAndOnlineStatusPaged(devMac, 0, offlineIndex, limit);
+				
+			}
+			LinkedList<Zigbee> zigbeeList = new LinkedList<Zigbee>();
+			if (onlineList != null) {
+				zigbeeList.addAll(onlineList);
+			}
+			if (offlineList != null) {
+				zigbeeList.addAll(offlineList);
+			}
 			ZigbeeAttr zigbeeAttr;
 			LayuiZigbeeModel temp;
 			for (Zigbee zigbee : zigbeeList) {
@@ -123,7 +138,6 @@ public class ModelServiceImpl implements IModelService {
 		}
 
 		// 第四步，返回数据
-		ltModel.setCount(zigbeeModelList.size());
 		ltModel.setData(zigbeeModelList);
 		return ltModel;
 	}
@@ -151,7 +165,6 @@ public class ModelServiceImpl implements IModelService {
 			return ltModel;
 		}
 		// 第三步，返回数据
-		ltModel.setCount(groupList.size());
 		ltModel.setData(new LinkedList<Object>());
 		ltModel.getData().addAll(groupList);
 		return ltModel;
@@ -185,7 +198,6 @@ public class ModelServiceImpl implements IModelService {
 			return ltModel;
 		}
 		// 第三步，返回数据
-		ltModel.setCount(zigbeeList.size());
 		ltModel.setData(zigbeeList);
 		return ltModel;
 	}
@@ -213,7 +225,6 @@ public class ModelServiceImpl implements IModelService {
 			return ltModel;
 		}
 		// 第三步，返回数据
-		ltModel.setCount(ployList.size());
 		ltModel.setData(new LinkedList<Object>());
 		ltModel.getData().addAll(ployList);
 		return ltModel;
@@ -242,7 +253,6 @@ public class ModelServiceImpl implements IModelService {
 			return ltModel;
 		}
 		// 第三步，返回数据
-		ltModel.setCount(list.size());
 		ltModel.setData(new LinkedList<Object>());
 		ltModel.getData().addAll(list);
 		return ltModel;
