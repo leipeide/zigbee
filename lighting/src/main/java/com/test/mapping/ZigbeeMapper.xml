@@ -183,4 +183,23 @@
 		zigbee_net =
 		#{zigbeeNet,jdbcType=INTEGER}
 	</select>
+	<select id="selectByDevMacPaged" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from zigbee_table
+		where dev_mac = #{devMac,jdbcType=VARCHAR}
+		limit
+		#{index,jdbcType=INTEGER},#{limit,jdbcType=INTEGER}
+	</select>
+	<select id="selectByDevMacAndOnlineStatusPaged" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from zigbee_table
+		where dev_mac = #{devMac,jdbcType=VARCHAR}
+		AND
+		zigbee_net =
+		#{zigbeeNet,jdbcType=INTEGER}
+		limit
+		#{index,jdbcType=INTEGER},#{limit,jdbcType=INTEGER}
+	</select>
 </mapper>

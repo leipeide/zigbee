@@ -97,7 +97,7 @@
 	</div>
 <%--   <script type="text/javascript" src="${pageContext.request.contextPath }/jsp/index1.js"></script> --%>
   <script type="text/javascript">
-  		alert("2018");
+  		//alert("2018");
 		//1.获取入口地址
 	    var localhost = "<%=request.getContextPath()%>";
 	    //2.获取登录成功后control返回的数据
@@ -347,13 +347,13 @@
 		}
 	}); 
 /*********************************控制主体区域*********************************/	    
-	    if(controlDiv.style.display == "block" && GroupsDiv.style.display == "none" &&  PloysDiv.style.display == "none" &&  UserInfo.style.display == "none"){
-	    	//alert("判断allDevicediv");
+	    if(controlDiv.style.display == "block" && GroupsDiv.style.display = "none" &&  PloysDiv.style.display = "none" &&  UserInfo.style.display = "none"){
+	    	alert("判断allDevicediv");
  			showAllDevice();
 	    }
 
 	   function ControllersHide(){
-		  // alert("判断allDevicediv");
+		   alert("判断allDevicediv");
 		   controlDiv.style.display = "block";
 		   GroupsDiv.style.display = "none";
 		   PloysDiv.style.display = "none";
@@ -361,7 +361,7 @@
 		   showAllDevice();
 	   } 
 	   function GroupsHide(){
-		   //alert("判断Groupdiv");
+		   alert("判断Groupdiv");
 		   GroupsDiv.style.display = "block";
 		   controlDiv.style.display = "none";
 		   PloysDiv.style.display = "none";
@@ -369,7 +369,7 @@
 		   showAllGroups();
 	   }
  	   function PloysHide(){
- 		   //alert("判断Ploysdiv");
+ 		   alert("判断Ploysdiv");
 		   PloysDiv.style.display = "block";
  		   GroupsDiv.style.display = "none";
 		   controlDiv.style.display = "none";
@@ -506,6 +506,7 @@
 		    			 ,size:'lg'
 		    	   		 ,height: 312
 		    	   		 ,url:localhost+'/user/allDeviceTable.do'
+		    	   		// ,url: localhost + '/user/allDeviceTable.do' +"userid="+jsonObj.user.id //数据接口
 		    	   		 ,toolbar:'#toolbarGroups'  
 		    	   		 ,page: true //开启分页
 		    	   		 ,cols: [[ //表头
@@ -597,7 +598,7 @@
 		//alert("onegroupMessageTable");
 	    document.getElementById("allGroupsDiv").style.display = "none";
     	document.getElementById("oneGroupsDiv").style.display = "block";
-    	//document.getElementById("oneGroupsTable") = " ";
+		alert("onegroupMessageTable");
 		layui.use(['table'], function(){
 	    	 	 var table = layui.table;
 	    		 table.render({
@@ -632,6 +633,7 @@
 		layui.use(['table'], function(){
 	    	 	 var table = layui.table;
 	    		 table.render({
+	    	   	     //skin: 'line' //行边框风格
 	    	   		 elem:'#onePloysTable'
 	    	   		 ,height: 312
 	    	   		 ,url:localhost+'/user/allDeviceTable.do'
