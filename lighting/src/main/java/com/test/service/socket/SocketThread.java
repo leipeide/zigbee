@@ -7,7 +7,7 @@ import java.util.Timer;
 
 /**
  * socket 线程类
- * 
+ * 将socket service随tomcat启动
  * @author zhangzhongwen
  * 
  */
@@ -18,7 +18,8 @@ public class SocketThread extends Thread {
 	public SocketThread(ServerSocket serverScoket) {
 		try {
 			if (null == serverSocket) {
-				this.serverSocket = new ServerSocket(7001);
+				this.serverSocket = new ServerSocket(7001); //新建一个线程，服务器端口号7001
+				//this.serverSocket = new ServerSocket(7004); //新建一个线程，测试端口号7004
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -27,8 +28,9 @@ public class SocketThread extends Thread {
 	}
 
 	public void run() {
-		timer = new Timer();
-		timer.schedule(new PloyThread(), 10, 20 * 1000);
+		timer = new Timer();//java.util.Timer定时器，实际上是个线程，定时调度所拥有的TimerTasks。
+		//schedule函数从现在起过delay毫秒以后，每隔period毫秒执行一次
+		timer.schedule(new PloyThread(), 10, 20 * 1000);  //一个TimerTask实际上就是一个拥有run方法的类，需要定时执行的代码放到run方法体内，
 		while (!this.isInterrupted()) {
 			try {
 				DeviceSocket devSocket = new DeviceSocket();

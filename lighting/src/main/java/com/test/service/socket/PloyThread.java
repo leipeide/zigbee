@@ -34,7 +34,7 @@ public class PloyThread  extends TimerTask{
 			if (operateList != null) {
 				for (PloyOperate operate : operateList) {
 					if (operate.getHours() == hours && operate.getMinutes() == minutes) {// operate的定时时间到了
-						System.out.println(hours + " : " + minutes);
+						//System.out.println(hours + " : " + minutes);
 						// 3、根据策略绑定的设备或分组，寻找到对应的socket端口号，发送指令。
 						if (p.getBindType() == 2) {// 3.1、如果bind_type == 2,绑定的是集控器mac地址
 							for (DeviceSocket ds : SocketTool.socketList) {
@@ -190,7 +190,7 @@ public class PloyThread  extends TimerTask{
 		log.info("serverPloy to " + ds.getDevice().getDevMac() + ": " + cmd);
 	}
 	
-	private String groupidToAddr(Integer groupid) {
+	private String groupidToAddr(Integer groupid) {    
 		String groupaddr = groupid.toString();
 		if (groupaddr.length() >= 4) {
 			groupaddr = groupaddr.substring(groupaddr.length() - 4);

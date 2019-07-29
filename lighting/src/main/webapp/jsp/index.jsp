@@ -617,6 +617,7 @@
             </tr>
           </table>
         </div><!-- 分块 -->
+        
       </div><!-- 首页 -->
       <div class="tab-pane fade" id="groupDiv"><!-- 分组 -->
         <div class="panel panel-info"><!-- 分块 -->
@@ -675,7 +676,7 @@
               </td>
             </tr>
           </table>
-        </div><!-- 分块 -->
+        </div><!-- 分块groupDiv -->
         <div class="panel panel-info" v-for="item of items"><!-- 分块 -->
           <div class="panel-heading">
             <h3 class="panel-title">{{item.name}}</h3>
@@ -799,6 +800,7 @@
             </tr>
           </table>
         </div><!-- 分块 -->
+        
       </div><!-- 首页 -->
       <div class="tab-pane fade" id="ployDiv"><!-- 策略 -->
         <div class="panel panel-info"><!-- 分块 -->
@@ -939,6 +941,7 @@
             </tr>
           </table>
         </div><!-- 分块 -->
+        
       </div><!-- 首页 -->
       <div class="tab-pane fade" id="userDiv"><!-- 用户 -->
 
@@ -1093,7 +1096,7 @@ function Ploy(ployName, ployId, status, userid, bindType, bindParam, timeZone) {
 	this.currentOperate = new PloyOperate(0, 0, 0, 1, 0);
 	this.operateArray = new Array();
   this.operateBackUp;
-  this.editStarted = false;
+  this.editStarted = false;  //可编辑状态
 }
 function User() {//用户数据
 	this.username = String();
@@ -1182,6 +1185,8 @@ function userDataRefresh(user, jsonObj) {
   }
   
 }
+
+
 
 function getLocalTime(hours, minutes, offset) {
   var hoursOffset = offset / 60;
@@ -1567,7 +1572,6 @@ var devDivVue = new Vue({
       userDivVue.$forceUpdate();
       testDivVue.$forceUpdate();
     },
-    //删除zigbee节点
     removeOfflineZigbee: function (zigbee) {
       userid = this.user.id;
       $.ajax({
@@ -1841,7 +1845,6 @@ var devDivVue = new Vue({
       }
       alertVue.show("Detail message", tempString);
     },
-    //zigbee节点重命名
     renameZigbee: function (zigbee) {
       var callbackFunc = function (newName) {
         if (newName != null && newName != "" && newName.length <= 16) {
@@ -1949,7 +1952,7 @@ var groupModelDivVue = new Vue({
     submitChange: function (event) {//添加zigbee节点到组
       var zigbeeList = new Array();
       var list = $(".zigbeeCheckbox");
-      for(var i = 0; i < list.length; i++){
+      for(var i = 0; i < list.length; i++) {
         if (list[i].checked == true) {
           zigbeeList.push(list[i].name.substring(0,list[i].name.length - 3));//将zigbee节点的mac地址加入到zigbeeList中
         }

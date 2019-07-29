@@ -10,15 +10,17 @@ public class DeviceAttr {
     private Integer devVersion;
 
     private String devIp;
-
+  //集控器广播控制节点的开关灯标志位，1为开灯，0为关灯
+    private Integer switchStatus;
+    
     private String param1;
-
+    
     private String param2;
 
     private String param3;
 
     private String param4;
-
+    
     public String getDevMac() {
         return devMac;
     }
@@ -58,16 +60,24 @@ public class DeviceAttr {
     public void setDevIp(String devIp) {
         this.devIp = devIp == null ? null : devIp.trim();
     }
+    
+    public Integer getSwitchStatus() {
+        return switchStatus;
+    }
+
+    public void setSwitchStatus(Integer switchStatus) {
+        this.switchStatus = switchStatus;
+    }
 
     public String getParam1() {
-        return param1;
-    }
+		return param1;
+	}
 
     public void setParam1(String param1) {
-        this.param1 = param1 == null ? null : param1.trim();
-    }
+    	this.param1 = param1 == null ? null : param1.trim();
+	}
 
-    public String getParam2() {
+	public String getParam2() {
         return param2;
     }
 

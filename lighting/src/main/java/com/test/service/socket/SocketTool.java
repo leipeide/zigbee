@@ -213,4 +213,10 @@ public class SocketTool {
 		}
 		return record;
 	}
+
+	//更新group数据库内switchStatus的最新状态
+	public static int updateGroupByPrimaryKeySelective(Group grouptemp) {
+		// TODO Auto-generated method stub
+		return testUtils.groupDao.updateByPrimaryKeySelective(grouptemp);
+	}
 }

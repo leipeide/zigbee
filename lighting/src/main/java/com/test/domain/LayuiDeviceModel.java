@@ -25,6 +25,8 @@ public class LayuiDeviceModel {
 	private Integer offlineNodes;
 	
 	private Integer nodesNumber;
+	//集控器广播控制节点的开关灯标志位，1为开灯，0为关灯
+	private Integer switchStatus;
 
 	public LayuiDeviceModel() {
 		super();
@@ -44,6 +46,7 @@ public class LayuiDeviceModel {
 		this.setDevType(deviceAttr.getDevType());
 		this.setDevVersion(deviceAttr.getDevVersion());
 		this.setZigbeeFinder(deviceAttr.getZigbeeFinder());
+		this.setSwitchStatus(deviceAttr.getSwitchStatus());
 	}
 
 	public Integer getOnlineNodes() {
@@ -140,6 +143,14 @@ public class LayuiDeviceModel {
 
 	public void setNodesNumber(Integer nodesNumber) {
 		this.nodesNumber = nodesNumber;
+	}
+
+	public Integer getSwitchStatus() {
+		return switchStatus;
+	}
+
+	public void setSwitchStatus(Integer switchStatus) {
+		this.switchStatus = switchStatus;
 	}
 
 }

@@ -1,10 +1,11 @@
 package com.test.domain;
 
 public class PloyOperate {
+	//1.策略操作id,主键
     private Integer id;
-
+    //2.策略id
     private Integer ployid;
-
+    //3.日期参数实际未使用
     private String date;
 
     private Integer hours;

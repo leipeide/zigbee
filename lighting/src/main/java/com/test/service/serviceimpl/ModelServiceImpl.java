@@ -19,6 +19,7 @@ import com.test.domain.DeviceAttr;
 import com.test.domain.Group;
 import com.test.domain.GroupPair;
 import com.test.domain.LayuiDeviceModel;
+import com.test.domain.LayuiGroupModel;
 import com.test.domain.LayuiTableModel;
 import com.test.domain.LayuiZigbeeModel;
 import com.test.domain.Ploy;
@@ -80,7 +81,8 @@ public class ModelServiceImpl implements IModelService {
 			ltModel.setMsg("");
 		} else {
 			ltModel.setCode(1);
-			ltModel.setMsg("数据读取越界！");
+			//ltModel.setMsg("数据读取越界！");
+			ltModel.setMsg("Data Reading Crossing Borders!");
 		}
 		// 第四步，返回数据
 		ltModel.setData(devModelList);
@@ -127,14 +129,17 @@ public class ModelServiceImpl implements IModelService {
 			ZigbeeAttr zigbeeAttr;
 			LayuiZigbeeModel temp;
 			for (Zigbee zigbee : zigbeeList) {
-				// 3. 生成LayuiZigbeeModel
+				//3.生成LayuiZigbeeModel
 				zigbeeAttr = zigbeeAttrDao.selectByPrimaryKey(zigbee.getZigbeeMac());
 				temp = new LayuiZigbeeModel(zigbee, zigbeeAttr);
 				zigbeeModelList.add(temp);
 			}
+			ltModel.setCode(0);
+			ltModel.setMsg("");
 		} else {
 			ltModel.setCode(1);
-			ltModel.setMsg("数据读取越界！");
+			//ltModel.setMsg("数据读取越界！");
+			ltModel.setMsg("Data Reading Crossing Borders!");
 		}
 
 		// 第四步，返回数据
@@ -153,27 +158,60 @@ public class ModelServiceImpl implements IModelService {
 		}
 		// 第二步，判断页面是否越界
 		ArrayList<Group> groupList = null;
+		LinkedList<LayuiGroupModel> modelList = new LinkedList<LayuiGroupModel>();
 		if (0 < page && page <= pageCount) {
 			// 分页查找数据
 			// 1. 分页查找用户group
 			groupList = groupDao.selectByUseridPaged(userid, (page - 1) * limit, limit);
+			LayuiGroupModel temp;
+			ArrayList<GroupPair> pairList;
+			Zigbee zigbeeTemp;
+			int onlineCount = 0;
+			int offlineCount = 0;
+			for (Group group: groupList) {
+				onlineCount = 0;
+				offlineCount = 0;
+				temp = new LayuiGroupModel(group);
+				// 查询该分组所有节点mac地址
+				pairList = groupPairDao.selectByGroupid(group.getGroupid());
+				// 若为空，说明该分组无节点
+				if (pairList != null) {
+					// 不为空，遍历查找数据库，查看节点在线状态
+					for (GroupPair pair : pairList) {
+						zigbeeTemp = zigbeeDao.selectByPrimaryKey(pair.getZigbeeMac());
+						if (zigbeeTemp != null) {
+							if (zigbeeTemp.getZigbeeNet() == 1) onlineCount++;
+							else offlineCount++;
+						}
+					}
+					temp.setOfflineNodes(offlineCount);
+					temp.setOnlineNodes(onlineCount);
+				} else {
+					temp.setOfflineNodes(0);
+					temp.setOnlineNodes(0);
+				}
+				modelList.add(temp);
+			}
 			ltModel.setCode(0);
 			ltModel.setMsg("");
 		} else {
 			ltModel.setCode(1);
-			ltModel.setMsg("数据读取越界！");
+			//ltModel.setMsg("数据读取越界！");
+			ltModel.setMsg("Data Reading Crossing Borders!");
 			return ltModel;
 		}
 		// 第三步，返回数据
 		ltModel.setData(new LinkedList<Object>());
-		ltModel.getData().addAll(groupList);
+		ltModel.getData().addAll(modelList);
 		return ltModel;
 	}
-
+/*// 根据zigbeeDao查询节点数据，返回zigbee数据无温湿度
 	@Override
 	public LayuiTableModel getGroupDetailTableDataByUserid(int groupid, int page, int limit) {
 		LayuiTableModel ltModel = new LayuiTableModel();
-		LinkedList<Object> zigbeeList = new LinkedList<Object>();
+		ArrayList<Object> zigbeeList = new ArrayList<Object>();
+		LinkedList<Object> onlineList = new LinkedList<Object>();
+		LinkedList<Object> offlineList = new LinkedList<Object>();
 		// 第一步，查询页数
 		ltModel.setCount(groupPairDao.selectGroupPairNumberByGroupid(groupid));
 		int pageCount = ltModel.getCount() / limit;
@@ -184,24 +222,123 @@ public class ModelServiceImpl implements IModelService {
 		ArrayList<GroupPair> groupPairList = null;
 		if (0 < page && page <= pageCount) {
 			// 分页查找数据
-			// 1. 分页查找用户grouppair
-			groupPairList = groupPairDao.selectByGroupidPaged(groupid, (page - 1) * limit, limit);
+			// 1. 查找用户grouppair
+			groupPairList = groupPairDao.selectByGroupid(groupid);
 			// 2. 根据groupPair的zigbeeMac查找zigbee
+			Zigbee temp = null;
 			for (GroupPair gp : groupPairList) {
-				zigbeeList.add(zigbeeDao.selectByPrimaryKey(gp.getZigbeeMac()));
+				temp = zigbeeDao.selectByPrimaryKey(gp.getZigbeeMac());
+				if (temp == null) continue;
+				if (temp.getZigbeeNet() == 1) {
+					onlineList.add(temp);
+				} else {
+					offlineList.add(temp);
+				}
 			}
+			
+			// 如果在线节点数据足够填充表单
+			if ((page - 1) * limit < onlineList.size()) {
+				zigbeeList.addAll((page - 1) * limit, onlineList);
+				// 如果在线节点数据不够填充表单
+				if (zigbeeList.size() < limit) {
+					if (offlineList.size() < limit - zigbeeList.size()) {
+						zigbeeList.addAll(offlineList);
+					} else {
+						zigbeeList.addAll(offlineList.subList(0, limit - zigbeeList.size()));
+					}
+				}
+				
+			} else {
+				// 如果在线节点数据量已经越界
+				if (page * limit <= ltModel.getCount()) {
+					zigbeeList.addAll(offlineList.subList((page - 1) * limit - onlineList.size(), page * limit));
+				} else {
+					zigbeeList.addAll(offlineList);
+				}
+			}
+			
 			ltModel.setCode(0);
 			ltModel.setMsg("");
 		} else {
 			ltModel.setCode(1);
-			ltModel.setMsg("数据读取越界！");
+			//ltModel.setMsg("数据读取越界！");
+			ltModel.setMsg("Data Reading Crossing Borders!");
 			return ltModel;
 		}
 		// 第三步，返回数据
 		ltModel.setData(zigbeeList);
 		return ltModel;
 	}
-
+*/
+	@Override //  根据zigbeeAttrDao查询节点数据，返回zigbee数据包含温湿度数据
+	public LayuiTableModel getGroupDetailTableDataByUserid(int groupid, int page, int limit) {
+		LayuiTableModel ltModel = new LayuiTableModel();
+		ArrayList<Object> zigbeeList = new ArrayList<Object>();
+		LinkedList<Object> onlineList = new LinkedList<Object>();
+		LinkedList<Object> offlineList = new LinkedList<Object>();
+		// 第一步，查询页数
+		ltModel.setCount(groupPairDao.selectGroupPairNumberByGroupid(groupid));
+		int pageCount = ltModel.getCount() / limit;
+		if (ltModel.getCount() % limit > 0) {
+			pageCount++;
+		}
+		// 第二步，判断页面是否越界
+		ArrayList<GroupPair> groupPairList = null;
+		if (0 < page && page <= pageCount) {
+			// 分页查找数据
+			// 1. 查找用户grouppair
+			groupPairList = groupPairDao.selectByGroupid(groupid);
+			// 2. 根据groupPair的zigbeeMac查找zigbee
+			Zigbee temp = null;
+			ZigbeeAttr temp1 = null;
+			LayuiZigbeeModel temp2;
+			for (GroupPair gp : groupPairList) {
+				temp = zigbeeDao.selectByPrimaryKey(gp.getZigbeeMac());
+				temp1 = zigbeeAttrDao.selectByPrimaryKey(gp.getZigbeeMac());
+				if (temp == null) continue;
+				if (temp.getZigbeeNet() == 1) {
+					temp2 = new LayuiZigbeeModel(temp, temp1);
+					onlineList.add(temp2);
+				} else {
+					temp2 = new LayuiZigbeeModel(temp, temp1);
+					offlineList.add(temp2);
+				}
+			}
+			
+			// 如果在线节点数据足够填充表单
+			if ((page - 1) * limit < onlineList.size()) {
+				zigbeeList.addAll((page - 1) * limit, onlineList);
+				// 如果在线节点数据不够填充表单
+				if (zigbeeList.size() < limit) {
+					if (offlineList.size() < limit - zigbeeList.size()) {
+						zigbeeList.addAll(offlineList);
+					} else {
+						zigbeeList.addAll(offlineList.subList(0, limit - zigbeeList.size()));
+					}
+				}
+				
+			} else {
+				// 如果在线节点数据量已经越界
+				if (page * limit <= ltModel.getCount()) {
+					zigbeeList.addAll(offlineList.subList((page - 1) * limit - onlineList.size(), page * limit));
+				} else {
+					zigbeeList.addAll(offlineList);
+				}
+			}
+			
+			ltModel.setCode(0);
+			ltModel.setMsg("");
+		} else {
+			ltModel.setCode(1);
+			//ltModel.setMsg("数据读取越界！");
+			ltModel.setMsg("Data Reading Crossing Borders!");
+			return ltModel;
+		}
+		// 第三步，返回数据
+		ltModel.setData(zigbeeList);
+		return ltModel;
+	}
+	
 	@Override
 	public LayuiTableModel getPloyTableDataByUserid(int userid, int page, int limit) {
 		LayuiTableModel ltModel = new LayuiTableModel();
@@ -221,7 +358,8 @@ public class ModelServiceImpl implements IModelService {
 			ltModel.setMsg("");
 		} else {
 			ltModel.setCode(1);
-			ltModel.setMsg("数据读取越界！");
+			//ltModel.setMsg("数据读取越界！");
+			ltModel.setMsg("Data Reading Crossing Borders!");
 			return ltModel;
 		}
 		// 第三步，返回数据
@@ -249,7 +387,8 @@ public class ModelServiceImpl implements IModelService {
 			ltModel.setMsg("");
 		} else {
 			ltModel.setCode(1);
-			ltModel.setMsg("数据读取越界！");
+			//ltModel.setMsg("数据读取越界！");
+			ltModel.setMsg("Data Reading Crossing Borders!");
 			return ltModel;
 		}
 		// 第三步，返回数据

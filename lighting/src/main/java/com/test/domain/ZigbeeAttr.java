@@ -14,7 +14,7 @@ public class ZigbeeAttr {
 	private Integer power;
 
 	private Integer minPower;
-
+	//param1-5为预留参数，暂时未用到
 	private String param1;
 
 	private String param2;

@@ -29,6 +29,7 @@ public class DeviceSocket {
 		this.device = new Device();
 		// TODO Auto-generated constructor stub
 	}
+	//指令池：存储指令，依次处理，处理完后删除（超时未回复删除，收到回复后删除）
 	public ArrayList<SocketCmd> getCmdPool() {
 		return cmdPool;
 	}

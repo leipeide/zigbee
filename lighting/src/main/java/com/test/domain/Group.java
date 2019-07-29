@@ -6,7 +6,10 @@ public class Group {
     private String groupName;
 
     private Integer userid;
-
+    
+    //.分组控制节点开关灯的标志位，1为开，0为关
+    private Integer switchStatus;
+    
     public Integer getGroupid() {
         return groupid;
     }
@@ -31,8 +34,18 @@ public class Group {
         this.userid = userid;
     }
 
+	public Integer getSwitchStatus() {
+		return switchStatus;
+	}
+
+	public void setSwitchStatus(Integer switchStatus) {
+		this.switchStatus = switchStatus;
+	}
+
 	@Override
 	public String toString() {
-		return "Group [groupid=" + groupid + ", groupName=" + groupName + ", userid=" + userid + "]";
+		return "Group [groupid=" + groupid + ", groupName=" + groupName + ", userid=" + userid + ", switchStatus="
+				+ switchStatus + "]";
 	}
+
 }

@@ -28,4 +28,7 @@ public interface GroupPairMapper {
 	int selectGroupPairNumberByGroupid(@Param("groupid")int groupid);
 
 	ArrayList<GroupPair> selectByGroupidPaged(@Param("groupid")int groupid, @Param("index")int index, @Param("limit")int limit);
+
+	ArrayList<GroupPair> selectByGroupid(@Param("groupid")int groupid);
+	
 }

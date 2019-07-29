@@ -8,11 +8,11 @@ public class Ploy {
     private String ployName;
 
     private Integer status;
-
+    //可以绑定控制器，可以绑定分组，目前只用到绑定分组
     private Integer bindType;
-
+    //
     private String bindData;
-
+    //该属性没有用到
     private Integer timeZone;
 
     public Integer getId() {

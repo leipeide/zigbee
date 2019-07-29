@@ -7,13 +7,14 @@
     <result column="dev_type" property="devType" jdbcType="INTEGER" />
     <result column="dev_version" property="devVersion" jdbcType="INTEGER" />
     <result column="dev_ip" property="devIp" jdbcType="VARCHAR" />
+    <result column="switch_status" property="switchStatus" jdbcType="INTEGER" />
     <result column="param1" property="param1" jdbcType="VARCHAR" />
     <result column="param2" property="param2" jdbcType="VARCHAR" />
     <result column="param3" property="param3" jdbcType="VARCHAR" />
     <result column="param4" property="param4" jdbcType="VARCHAR" />
   </resultMap>
   <sql id="Base_Column_List" >
-    dev_mac, zigbee_finder, dev_type, dev_version, dev_ip, param1, param2, param3, param4
+    dev_mac, zigbee_finder, dev_type, dev_version, dev_ip, switch_status, param1, param2, param3, param4
   </sql>
   <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
     select 
@@ -27,11 +28,11 @@
   </delete>
   <insert id="insert" parameterType="com.test.domain.DeviceAttr" >
     insert into dev_attr_table (dev_mac, zigbee_finder, dev_type, 
-      dev_version, dev_ip, param1, 
+      dev_version, dev_ip, switch_status,param1, 
       param2, param3, param4
       )
     values (#{devMac,jdbcType=VARCHAR}, #{zigbeeFinder,jdbcType=INTEGER}, #{devType,jdbcType=INTEGER}, 
-      #{devVersion,jdbcType=INTEGER}, #{devIp,jdbcType=VARCHAR}, #{param1,jdbcType=VARCHAR}, 
+      #{devVersion,jdbcType=INTEGER}, #{devIp,jdbcType=VARCHAR},#{switchStatus,jdbcType=INTEGER}, #{param1,jdbcType=VARCHAR}, 
       #{param2,jdbcType=VARCHAR}, #{param3,jdbcType=VARCHAR}, #{param4,jdbcType=VARCHAR}
       )
   </insert>
@@ -110,6 +111,9 @@
       </if>
       <if test="devIp != null" >
         dev_ip = #{devIp,jdbcType=VARCHAR},
+      </if>
+      <if test="switchStatus != null" >
+        switch_status = #{switchStatus,jdbcType=VARCHAR},
       </if>
       <if test="param1 != null" >
         param1 = #{param1,jdbcType=VARCHAR},

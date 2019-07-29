@@ -49,7 +49,12 @@
 		<listener-class>com.test.service.socket.SocketServiceLoader
 		</listener-class>
 	</listener>
+<!-- 项目前端界面未重构前默认登录页面为index.jsp
 	<welcome-file-list>
 		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list> -->
+<!-- 	界面重构后，添加中英文语言环境，login2页面无法满足中英文语言环境；重新设置登录页面 -->
+	<welcome-file-list>
+		<welcome-file>jsp/login_en.jsp</welcome-file>
 	</welcome-file-list>
 </web-app>

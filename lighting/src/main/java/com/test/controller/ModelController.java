@@ -46,11 +46,11 @@ public class ModelController {
 		String userid = request.getParameter("userid");
 		String page = request.getParameter("page");
 		String limit = request.getParameter("limit");
-		// System.out.println("userid=" + userid + " page=" + page + " limit=" + limit);
 		if (userid == null || page == null || limit == null) {
 			LayuiTableModel model = new LayuiTableModel();
 			model.setCode(2);
-			model.setMsg("参数不能为空！");
+			//model.setMsg("参数不能为空！");
+			model.setMsg("Parameters cannot be null!");
 			try {
 				response.getWriter().write(JSONObject.toJSONString(model));
 			} catch (IOException e) {
@@ -62,7 +62,7 @@ public class ModelController {
 		LayuiTableModel ltmodel = modelService.getDeviceTableDataByUserid(Integer.parseInt(userid),
 				Integer.parseInt(page), Integer.parseInt(limit));
 		String dataJson = JSONObject.toJSONString(ltmodel);
-		// System.out.println(dataJson);
+		
 		try {
 			response.getWriter().write(dataJson);
 		} catch (IOException e) {
@@ -82,7 +82,8 @@ public class ModelController {
 		if (devMac == null || page == null || limit == null) {
 			LayuiTableModel model = new LayuiTableModel();
 			model.setCode(2);
-			model.setMsg("参数不能为空！");
+			//model.setMsg("参数不能为空！");
+			model.setMsg("Parameters cannot be null!");
 			try {
 				response.getWriter().write(JSONObject.toJSONString(model));
 			} catch (IOException e) {
@@ -94,7 +95,7 @@ public class ModelController {
 		LayuiTableModel ltmodel = modelService.getZigbeeTableDataByDeviceMac(devMac, Integer.parseInt(page),
 				Integer.parseInt(limit));
 		String dataJson = JSONObject.toJSONString(ltmodel);
-		// System.out.println(dataJson);
+		
 		try {
 			response.getWriter().write(dataJson);
 		} catch (IOException e) {
@@ -113,7 +114,8 @@ public class ModelController {
 		if (userid == null || page == null || limit == null) {
 			LayuiTableModel model = new LayuiTableModel();
 			model.setCode(2);
-			model.setMsg("参数不能为空！");
+			//model.setMsg("参数不能为空！");
+			model.setMsg("Parameters cannot be null!");
 			try {
 				response.getWriter().write(JSONObject.toJSONString(model));
 			} catch (IOException e) {
@@ -125,7 +127,7 @@ public class ModelController {
 		LayuiTableModel ltmodel = modelService.getGroupTableDataByUserid(Integer.parseInt(userid),
 				Integer.parseInt(page), Integer.parseInt(limit));
 		String dataJson = JSONObject.toJSONString(ltmodel);
-		// System.out.println(dataJson);
+		
 		try {
 			response.getWriter().write(dataJson);
 		} catch (IOException e) {
@@ -144,7 +146,8 @@ public class ModelController {
 		if (groupid == null || page == null || limit == null) {
 			LayuiTableModel model = new LayuiTableModel();
 			model.setCode(2);
-			model.setMsg("参数不能为空！");
+			//model.setMsg("参数不能为空！");
+			model.setMsg("Parameters cannot be null!");
 			try {
 				response.getWriter().write(JSONObject.toJSONString(model));
 			} catch (IOException e) {
@@ -156,7 +159,7 @@ public class ModelController {
 		LayuiTableModel ltmodel = modelService.getGroupDetailTableDataByUserid(Integer.parseInt(groupid),
 				Integer.parseInt(page), Integer.parseInt(limit));
 		String dataJson = JSONObject.toJSONString(ltmodel);
-		// System.out.println(dataJson);
+		//System.out.println("dataTson:"+dataJson);
 		try {
 			response.getWriter().write(dataJson);
 		} catch (IOException e) {
@@ -175,7 +178,7 @@ public class ModelController {
 		if (userid == null || page == null || limit == null) {
 			LayuiTableModel model = new LayuiTableModel();
 			model.setCode(2);
-			model.setMsg("参数不能为空！");
+			model.setMsg("Parameters cannot be null!");
 			try {
 				response.getWriter().write(JSONObject.toJSONString(model));
 			} catch (IOException e) {
@@ -187,7 +190,6 @@ public class ModelController {
 		LayuiTableModel ltmodel = modelService.getPloyTableDataByUserid(Integer.parseInt(userid),
 				Integer.parseInt(page), Integer.parseInt(limit));
 		String dataJson = JSONObject.toJSONString(ltmodel);
-		// System.out.println(dataJson);
 		try {
 			response.getWriter().write(dataJson);
 		} catch (IOException e) {
@@ -206,7 +208,8 @@ public class ModelController {
 		if (id == null || page == null || limit == null) {
 			LayuiTableModel model = new LayuiTableModel();
 			model.setCode(2);
-			model.setMsg("参数不能为空！");
+			//model.setMsg("参数不能为空！");
+			model.setMsg("Parameters cannot be null!");
 			try {
 				response.getWriter().write(JSONObject.toJSONString(model));
 			} catch (IOException e) {
@@ -218,7 +221,6 @@ public class ModelController {
 		LayuiTableModel ltmodel = modelService.getPloyOperateTableDataByPloyid(Integer.parseInt(id),
 				Integer.parseInt(page), Integer.parseInt(limit));
 		String dataJson = JSONObject.toJSONString(ltmodel);
-		// System.out.println(dataJson);
 		try {
 			response.getWriter().write(dataJson);
 		} catch (IOException e) {

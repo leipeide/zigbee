@@ -4,17 +4,20 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimerTask;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
 import com.alibaba.fastjson.JSONObject;
 import com.test.domain.DataObject;
@@ -37,14 +40,13 @@ public class UserController {
 	private Logger log = Logger.getLogger("D");
 
 	public UserController() {
-		// System.out.println("UserController");
+		
 	}
 
 	private void myprint(DeviceSocket ds, String cmd) throws IOException {
 		PrintWriter out = new PrintWriter(ds.getSocket().getOutputStream());// 得到输出流
 		out.print(cmd);
 		out.flush();
-//		System.out.println("server to " + ds.getDevice().getDevMac() + ": " + cmd);
 		log.info("server to " + ds.getDevice().getDevMac() + ": " + cmd);
 	}
 
@@ -57,7 +59,6 @@ public class UserController {
 		String cmd = request.getParameter("command");
 		DataObject data = new DataObject();
 		if (SocketTool.socketList != null) {
-
 			for (DeviceSocket ds : SocketTool.socketList) {// 获取socket列表内是否有该设备
 				try {
 					myprint(ds, cmd);
@@ -79,7 +80,7 @@ public class UserController {
 	
 	@RequestMapping("/updateZigbeeParam")// 更新zigbee节点信息
 	public void updateZigbeeParam(HttpServletRequest request, HttpServletResponse response) {
-		// 获取zigbee节点的mac地址，集控器mac地址
+		//获取zigbee节点的mac地址，集控器mac地址
 		DataObject data = new DataObject();
 		String zigbeeMac = request.getParameter("zigbeeMac");
 		Zigbee zb = userService.getZigbeeByMac(zigbeeMac);
@@ -87,7 +88,7 @@ public class UserController {
 			if (SocketTool.socketList != null) {
 				for (DeviceSocket ds : SocketTool.socketList) {
 					if (ds.getDevice().getDevMac() != null && ds.getDevice().getDevMac().equals(zb.getDevMac())) {
-						// 向集控器发送获取zigbee节点信息指令
+						//向集控器发送获取zigbee节点信息指令
 						
 					}
 				}
@@ -111,7 +112,7 @@ public class UserController {
 		}
 	}
 	
-	@RequestMapping("/LOGIN") //新登录界面,新增页面,跳转至index.html
+	@RequestMapping("/LOGIN") //新登录界面,新增页面,跳转至index.html；此函数没有用
 	public String LOGIN(HttpServletRequest request, HttpServletResponse response) {
 		String username = request.getParameter("username");
 
@@ -154,38 +155,43 @@ public class UserController {
 
 	@RequestMapping("/login") // 登录
 	public String login(HttpServletRequest request, Model model) {
-		//System.out.println("进入login");
 		String username = request.getParameter("username");
 
 		String password = request.getParameter("password");
-		//System.out.println("username:"+username+"password:"+password);
+
 		if (username != null && password != null) {
 			User user = userService.getUserByName(username);
-
+			
 			if (user != null && username.equals(user.getUsername()) && password.equals(user.getPassword())) {
-
 				DataObject data = userService.getDataByUser(user); ///携带查询到的数据到达首页
-
 				String myJson = JSONObject.toJSONString(data);
-
 				model.addAttribute("responseJson", myJson);
-				//System.out.println("loginServlet:"+myJson);
-				 //return "/WEB-INF/index.html";
-				//return "/jsp/index.jsp";
-				return "/jsp/index1.jsp";
-				
+				//return "/jsp/index.jsp";//原版登录后进入的首页
+				return "/jsp/index1.jsp";//页面重构后登录后进入的首页	
 			} else {
-
 				DataObject data = new DataObject();
-
-				data.setError("用户名或密码错误!");
-
-				String myJson = JSONObject.toJSONString(data);
-
-				model.addAttribute("responseJson", myJson);
-				//System.out.println("loginServlet:"+JSONObject.toJSONString(data));
-				//return "/jsp/login.jsp";  // 原版为login.jsp
-				return "/jsp/login2.jsp";   //修改版为login2.jsp
+				//.判断当前语言环境，返回对应的登录界面
+				String LOCALE_SESSION_ATTRIBUTE_NAME = SessionLocaleResolver.class.getName() + ".LOCALE";
+				Object locale = request.getSession().getAttribute(LOCALE_SESSION_ATTRIBUTE_NAME);
+				String localeStr = null;
+				if(locale != null) {
+				     localeStr = locale.toString(); 
+				}
+				if(localeStr != null && localeStr.equals("zh_CN")) {
+					data.setError("用户名或密码错误");
+					String myJson = JSONObject.toJSONString(data);
+					model.addAttribute("responseJson", myJson);
+					//1.返回中文登录界面
+					return "/jsp/login_zh.jsp";
+				}else {
+					data.setError("Wrong username or password");
+					String myJson = JSONObject.toJSONString(data);
+					model.addAttribute("responseJson", myJson);
+					//2.返回英文登录界面
+					return "/jsp/login_en.jsp";
+				}
+				//return "/jsp/login.jsp";// 原版为登录页面为login.jsp
+				//return "/jsp/login_en.jsp";// 页面重构后登录页面为login_en.jsp
 			}
 		}
 		return null;
@@ -193,7 +199,6 @@ public class UserController {
 
 	@RequestMapping("/regist") // 注册
 	public void regist(HttpServletRequest request, HttpServletResponse response) {
-		//System.out.println("进入注册");
 		String username = request.getParameter("username");
 		String password = request.getParameter("password");
 		String email = request.getParameter("email");
@@ -202,7 +207,6 @@ public class UserController {
 		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
 		try {
 			response.getWriter().write(JSONObject.toJSONString(data));
-			System.out.println(JSONObject.toJSONString(data));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -245,7 +249,6 @@ public class UserController {
 	@RequestMapping("/addDev") // 用户添加集控器
 	// 如果有该设备,返回所有用户数据（相当于刷新）
 	public void addDev(HttpServletRequest request, HttpServletResponse response) {
-		//System.out.println("addDev"+request.getParameter("devMac")+request.getParameter("userid"));
 		String devMac = request.getParameter("devMac");
 
 		Integer userid = Integer.parseInt(request.getParameter("userid"));
@@ -299,7 +302,6 @@ public class UserController {
 	@RequestMapping("/renameDev") // 集控器重命名
 	// 如果修改成功，返回空
 	public void renameDev(HttpServletRequest request, HttpServletResponse response) {
-		//System.out.println("进入renameDev:"+request.getParameter("devMac")+request.getParameter("devNewName"));
 
 		String devMac = request.getParameter("devMac");
 
@@ -323,7 +325,7 @@ public class UserController {
 	public void trunZigbeeNetFinder(HttpServletRequest request, HttpServletResponse response) {
 		String devMac = request.getParameter("devMac");// mac地址用于查找对应的socket
 		int timeCmd = Integer.parseInt(request.getParameter("timeCmd"));// timeCmd用于设定开启时长，或关闭
-		// System.out.println(devMac + " " + timeCmd);
+	    //System.out.println(devMac + "开启节点打开状态TimeCmd:" + timeCmd);
 		String timeString;
 		if (timeCmd > 15) {
 			timeString = Integer.toHexString(timeCmd);
@@ -338,7 +340,6 @@ public class UserController {
 		data.setError("The device is offline or you haven't added the device yet!");
 
 		if (SocketTool.socketList != null) {
-
 			// 查找socket端口
 			for (DeviceSocket ds : SocketTool.socketList) {// 获取socket列表内是否有该设备
 				if (ds.getDevice().getDevMac() != null && ds.getDevice().getDevMac().equals(devMac)) {// 找到设备对应的scoket线程
@@ -396,10 +397,10 @@ public class UserController {
 	// 如果修改成功, 返回空
 	public void renameZigbee(HttpServletRequest request, HttpServletResponse response) {
 
-		System.out.println("zigbeeMac :newName:");
 		String zigbeeMac = request.getParameter("zigbeeMac");
 
 		String newName = request.getParameter("newName");
+
 		DataObject data = userService.renameZigbee(zigbeeMac, newName);
 
 		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
@@ -417,14 +418,14 @@ public class UserController {
 	@RequestMapping("/removeZigbee") // 删除离线zigbee节点
 	
 	public void removeZigbee(HttpServletRequest request, HttpServletResponse response) {
-		System.out.println("删除节点removeZigbee");
+		
 		DataObject data = new DataObject();
 		
 		String zigbeeMac = request.getParameter("zigbeeMac");
 		
 		Integer userid = Integer.parseInt(request.getParameter("userid"));
 		
-		System.out.println(zigbeeMac + "..." + userid);
+		//System.out.println(zigbeeMac + "..." + userid);
 		
 		User user = userService.getUserById(userid);
 		
@@ -451,7 +452,7 @@ public class UserController {
 	// 1,接受用户id
 	// 2,调用service方法重组数据返回
 	public void refresh(HttpServletRequest request, HttpServletResponse response) {
-
+		//System.out.println("进入刷新");
 		Integer userid = Integer.parseInt(request.getParameter("userid"));
 
 		DataObject data = userService.getDataByUser(userService.getUserById(userid));
@@ -474,7 +475,7 @@ public class UserController {
 	public void switchByDev(HttpServletRequest request, HttpServletResponse response) {
 		String devMac = request.getParameter("devMac");
 		String cmd = request.getParameter("cmd");
-		//System.out.println("devMac:"+devMac+"cmd:"+cmd);
+
 		DataObject data = new DataObject();
 
 //		data.setError("该设备离线或您尚未添加该设备!");
@@ -557,7 +558,6 @@ public class UserController {
 	public void setBrightnessByDev(HttpServletRequest request, HttpServletResponse response) {
 		String devMac = request.getParameter("devMac");
 		String brightness = request.getParameter("brightness");
-		System.out.println("devMac:"+devMac+"brightness:"+brightness);
 		int bright = Integer.parseInt(brightness);
 		if (bright > 15) {
 			brightness = Integer.toHexString(bright);
@@ -681,7 +681,6 @@ public class UserController {
 								// data.setError("已有相同指令正在执行!");
 								try {
 									myprint(ds, socketcmd.getCmdString());
-
 									data.setError("");// response返回结果,指令成功发出
 									break;
 								} catch (IOException e) {
@@ -700,7 +699,6 @@ public class UserController {
 							socketcmd.getTimer().schedule(new TimerTask() {
 								private ArrayList<SocketCmd> cmdPool = ds.getCmdPool();
 								private SocketCmd thisCmd = socketcmd;
-
 								public void run() {
 									this.cancel();
 									if (cmdPool.contains(thisCmd)) {
@@ -814,7 +812,6 @@ public class UserController {
 				}
 			}
 		} else {
-//			data.setError("节点不存在!");
 			data.setError("Node does not exist!");
 		}
 
@@ -832,7 +829,6 @@ public class UserController {
 
 	@RequestMapping("/addGroup") // 为用户添加新的控制组
 	public void addGroup(HttpServletRequest request, HttpServletResponse response) {
-
 		String groupName = request.getParameter("groupName");
 
 		Integer userid = Integer.parseInt(request.getParameter("userid"));
@@ -878,7 +874,7 @@ public class UserController {
 		Integer groupid = Integer.parseInt(request.getParameter("groupid"));
 
 		String groupNewName = request.getParameter("groupNewName");
-
+		//System.out.println("进入集控器重命名");
 		DataObject data = userService.renameGroup(groupid, groupNewName);
 
 		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
@@ -892,17 +888,40 @@ public class UserController {
 			e.printStackTrace();
 		}
 	}
+	@RequestMapping("/getUseZigbeeMessage") // 向控制组中添加节点，先查询集控器和可用的节点信息，返回js中，利用信息进行数据选择
+	public void getUseZigbeeMessage(HttpServletRequest request, HttpServletResponse response) {
+		Integer groupid = Integer.parseInt(request.getParameter("groupid"));
+		Integer userid = Integer.parseInt(request.getParameter("userid"));
+		DataObject data = new DataObject();
+		if(groupid != null & userid != null) {
+			data = userService.getUseZigbeeMessage(groupid,userid); 
+			
+		}else{
+			data.setError("参数错误，未查询到可用的节点信息");
+		}
+		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
+		try {
+			//System.out.println("data:"+JSONObject.toJSONString(data));
+			response.getWriter().write(JSONObject.toJSONString(data));
 
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		
+	}
 	@RequestMapping("/addZigbeeToGroup")
 	public void addZigbeeToGroup(HttpServletRequest request, HttpServletResponse response) {
-
 		String zigbeeListString = request.getParameter("zigbeeList");
 		Integer groupid = Integer.parseInt(request.getParameter("groupid"));
-
+		//System.out.println("进入接口层添加节点"+"zigbeeListString:"+zigbeeListString);
+		
 		String[] zigbeeMacList = zigbeeListString.split(",");
 		ArrayList<Zigbee> zigbeeList = new ArrayList<>();
 		Zigbee temp;
 		for (int i = 0; i < zigbeeMacList.length; i++) {
+			//System.out.println("zigbeeMac:"+zigbeeMacList[i]);
 			temp = userService.getZigbeeByMac(zigbeeMacList[i]);
 			if (temp != null) {
 				zigbeeList.add(temp);
@@ -942,7 +961,6 @@ public class UserController {
 									// data.setError("已有相同指令正在执行!");
 									try {
 										myprint(ds, socketcmd.getCmdString());
-
 										//data.setError("");// response返回结果,指令成功发出
 									} catch (IOException e) {
 										// TODO Auto-generated catch block
@@ -955,7 +973,6 @@ public class UserController {
 								socketcmd.getTimer().schedule(new TimerTask() {
 									private ArrayList<SocketCmd> cmdPool = ds.getCmdPool();
 									private SocketCmd thisCmd = socketcmd;
-
 									public void run() {
 										this.cancel();
 										if (cmdPool.contains(thisCmd)) {
@@ -966,7 +983,6 @@ public class UserController {
 								ds.getCmdPool().add(socketcmd);
 								try {
 									myprint(ds, socketcmd.getCmdString());
-
 									//data.setError("");// response返回结果,指令成功发出
 								} catch (IOException e) {
 									// TODO Auto-generated catch block
@@ -1080,7 +1096,6 @@ public class UserController {
 		String zigbeeMac = request.getParameter("zigbeeMac");
 		Integer groupid = Integer.parseInt(request.getParameter("groupid"));
 
-		// System.out.println(zigbeeMac + "-----" + groupid.toString());
 		Zigbee zb = userService.getZigbeeByMac(zigbeeMac);
 		Group group = userService.getGroupById(groupid);
 
@@ -1172,7 +1187,7 @@ public class UserController {
 	public void switchByGroup(HttpServletRequest request, HttpServletResponse response) {
 		int groupid = Integer.parseInt(request.getParameter("groupid"));
 		String cmd = request.getParameter("cmd");
-
+	//	System.out.println("groupaddr0:"+groupid);
 		Group group = userService.getGroupById(groupid);
 
 		DataObject data = new DataObject();
@@ -1180,7 +1195,7 @@ public class UserController {
 		if (group != null) {
 
 			String groupaddr = groupidToAddr(group.getGroupid());
-
+//			System.out.println("groupaddr1:"+groupaddr);
 //			data.setError("无法连接离线集控器!");
 			data.setError("Unable to connect offline controller!");
 			if (SocketTool.socketList != null) {
@@ -1264,6 +1279,7 @@ public class UserController {
 	@RequestMapping("/setBrightnessByGroup") // 通过组地址设置zigbee节点亮度
 	public void setBrightnessByGroup(HttpServletRequest request, HttpServletResponse response) {
 		int groupid = Integer.parseInt(request.getParameter("groupid"));
+		//System.out.println("groupAddr0:"+ groupid);
 		String brightness = request.getParameter("brightness");
 		int bright = Integer.parseInt(brightness);
 		if (bright > 15) {
@@ -1280,7 +1296,7 @@ public class UserController {
 		if (group != null) {
 
 			String groupaddr = groupidToAddr(group.getGroupid());
-
+		//	System.out.println("groupAddr1:"+ groupaddr);
 //			data.setError("无法连接离线集控器!");
 			data.setError("Unable to connect offline controller!");
 			if (SocketTool.socketList != null) {
@@ -1359,6 +1375,9 @@ public class UserController {
 		}
 	}
 
+	
+	
+	
 	@RequestMapping("/addPloy") // 为用户添加新的策略
 	public void addPloy(HttpServletRequest request, HttpServletResponse response) {
 
@@ -1371,7 +1390,7 @@ public class UserController {
 		Integer userid = Integer.parseInt(request.getParameter("userid"));
 
 		Integer timeZone = Integer.parseInt(request.getParameter("timeZone"));
-
+		//System.out.println("addPloy:"+"ployName:"+ployName+"bindType:"+bindType+"bindData:"+bindData+"timeZone:"+timeZone);
 		Ploy ploy = new Ploy();
 		ploy.setPloyName(ployName);
 		ploy.setBindType(bindType);
@@ -1482,7 +1501,7 @@ public class UserController {
 		Integer bindType = Integer.parseInt(request.getParameter("bindType"));
 
 		String bindData = request.getParameter("bindData");
-
+		//System.out.println("id:"+id+"bindType:"+bindType+"bindData:"+bindData);
 		DataObject data = userService.changePloyBindById(id, bindType, bindData);
 
 		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
@@ -1531,23 +1550,102 @@ public class UserController {
 		}
 		return groupaddr;
 	}
+
+	@RequestMapping("/addPloyOperate") // 向策略内添加操作
+	public void addPloyOperate(HttpServletRequest request, HttpServletResponse response) {
+			Integer ployid = Integer.parseInt(request.getParameter("ployid"));
+			Integer hours = Integer.parseInt(request.getParameter("hours"));
+			Integer minutes = Integer.parseInt(request.getParameter("minutes"));
+			Integer operateType = Integer.parseInt(request.getParameter("operateType"));
+			Integer operateParam = Integer.parseInt(request.getParameter("operateParam"));
+			
+			DataObject data = new DataObject();
+			data = userService.addPloyOperate(ployid, hours, minutes, operateType, operateParam);
+			
+			response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
+
+			try {
+
+				response.getWriter().write(JSONObject.toJSONString(data));
+
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	}
 	
-	@RequestMapping("/allDeviceTable")
-	public void allDeviceTable(HttpServletRequest request, HttpServletResponse response) {
-		//System.out.println("nihoaa"+request.getParameter("devMac"));
-		Map map = new HashMap(); 
-		 /*
-		  map.put("code", "0"); 
-		  map.put("msg", ""); 
-		  map.put("count","1000"); 
-		  map.put("data", "{\"id\":10000,\"username\":\"user-0\",\"sex\":\"女\",\"city\":\"城市-0\",\"sign\":\"签名-0\",\"experience\":255,\"logins\":24,\"wealth\":82830700,\"classify\":\"作家\",\"score\":57},{\"id\":10001,\"username\":\"user-1\",\"sex\":\"男\",\"city\":\"城市-1\",\"sign\":\"签名-1\",\"experience\":884,\"logins\":58,\"wealth\":64928690,\"classify\":\"词人\",\"score\":27},{\"id\":10002,\"username\":\"user-2\",\"sex\":\"女\",\"city\":\"城市-2\",\"sign\":\"签名-2\",\"experience\":650,\"logins\":77,\"wealth\":6298078,\"classify\":\"酱油\",\"score\":31},{\"id\":10003,\"username\":\"user-3\",\"sex\":\"女\",\"city\":\"城市-3\",\"sign\":\"签名-3\",\"experience\":362,\"logins\":157,\"wealth\":37117017,\"classify\":\"诗人\",\"score\":68},{\"id\":10004,\"username\":\"user-4\",\"sex\":\"男\",\"city\":\"城市-4\",\"sign\":\"签名-4\",\"experience\":807,\"logins\":51,\"wealth\":76263262,\"classify\":\"作家\",\"score\":6},{\"id\":10005,\"username\":\"user-5\",\"sex\":\"女\",\"city\":\"城市-5\",\"sign\":\"签名-5\",\"experience\":173,\"logins\":68,\"wealth\":60344147,\"classify\":\"作家\",\"score\":87},{\"id\":10006,\"username\":\"user-6\",\"sex\":\"女\",\"city\":\"城市-6\",\"sign\":\"签名-6\",\"experience\":982,\"logins\":37,\"wealth\":57768166,\"classify\":\"作家\",\"score\":34},"); 
-		  */
-		  try {
-			response.getWriter().write(JSONObject.toJSONString(map));
-			  //response.getWriter().write();
+	
+	@RequestMapping("/removePloyOperate") // 删除策略内操作
+	public void removePloyOperate(HttpServletRequest request, HttpServletResponse response) {
+		Integer id = Integer.parseInt(request.getParameter("operateid"));
+		Integer ployid = Integer.parseInt(request.getParameter("ployid"));
+		Integer userid = Integer.parseInt(request.getParameter("userid"));
+		DataObject data = new DataObject();
+		data = userService.removePloyOperate(id,ployid,userid);
+		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
+		try {
+
+			response.getWriter().write(JSONObject.toJSONString(data));
+
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
+	
+	@RequestMapping("/getPloyStatusForAddBroadcastPlan") // 查找ploy信息,添加策略操作时，需要策略执行状态在停止状态
+	public void getPloyStatusForAddBroadcastPlan(HttpServletRequest request, HttpServletResponse response) {
+		Integer ployid = Integer.parseInt(request.getParameter("ployid"));
+		Ploy ploy = new Ploy();
+		ploy =  userService.getPloyForAddBroadcastPlan(ployid);
+		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
+		try {
+			response.getWriter().write(JSONObject.toJSONString(ploy));
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
+	@RequestMapping("language.do")
+	public void language(HttpServletRequest request, HttpServletResponse response) {
+		String lang = request.getParameter("lang");
+		Locale locale = null;
+		if (lang.equals("en_US")) {
+            locale = new Locale("en", "US");
+        } else {
+            locale = new Locale("zh", "CN");
+        }
+		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
+		try {
+			response.getWriter().write(JSONObject.toJSONString(locale));
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+		
+	@RequestMapping("Exit.do")//退出
+	public String Exit(HttpServletRequest request, HttpServletResponse response) {
+		//在后台取得session中保存的中英标识。
+		String LOCALE_SESSION_ATTRIBUTE_NAME = SessionLocaleResolver.class.getName() + ".LOCALE";
+		Object locale = request.getSession().getAttribute(LOCALE_SESSION_ATTRIBUTE_NAME);
+		String localeStr = null;
+		if(locale != null) {
+		     localeStr = locale.toString(); 
+		}
+		if(localeStr != null && localeStr.equals("zh_CN")) { 
+			//返回中文登录界面
+			return "/jsp/login_zh.jsp";
+		}else {
+			//返回英文登录界面
+			return "/jsp/login_en.jsp";
+		}
+
+	}
+	
 }

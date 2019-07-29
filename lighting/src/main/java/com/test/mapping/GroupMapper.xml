@@ -5,9 +5,10 @@
 		<id column="groupid" property="groupid" jdbcType="INTEGER" />
 		<result column="group_name" property="groupName" jdbcType="VARCHAR" />
 		<result column="userid" property="userid" jdbcType="INTEGER" />
+		<result column="switch_status" property="switchStatus" jdbcType="INTEGER" />
 	</resultMap>
 	<sql id="Base_Column_List">
-		groupid, group_name, userid
+		groupid, group_name, userid, switch_status
 	</sql>
 	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
 		parameterType="java.lang.Integer">
@@ -28,10 +29,10 @@
 		where groupid = #{groupid,jdbcType=INTEGER}
 	</delete>
 	<insert id="insert" parameterType="com.test.domain.Group">
-		insert into group_table (groupid, group_name, userid
+		insert into group_table (groupid, group_name, userid,switch_status
 		)
 		values (#{groupid,jdbcType=INTEGER}, #{groupName,jdbcType=VARCHAR},
-		#{userid,jdbcType=INTEGER}
+		#{userid,jdbcType=INTEGER}, #{switchStatus,jdbcType=INTEGER}
 		)
 	</insert>
 	<insert id="insertSelective" parameterType="com.test.domain.Group">
@@ -68,6 +69,9 @@
 			<if test="userid != null">
 				userid = #{userid,jdbcType=INTEGER},
 			</if>
+			<if test="switchStatus != null" >
+        		switch_status = #{switchStatus,jdbcType=VARCHAR},
+      		</if>
 		</set>
 		where groupid = #{groupid,jdbcType=INTEGER}
 	</update>

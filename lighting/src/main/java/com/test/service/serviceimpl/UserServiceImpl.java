@@ -3,6 +3,7 @@ package com.test.service.serviceimpl;
 import java.util.ArrayList;
 //import java.util.HashMap;
 //import java.util.Map;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -132,7 +133,8 @@ public class UserServiceImpl implements IUserService {
 			}
 			
 		} else {//该设备已被其他用户添加
-			data.setError("The device has been added by a user with id" + dev.getUserid().toString());
+			//data.setError("The device has been added by a user with id" + dev.getUserid().toString());
+			data.setError("The device has been added by other user");
 			return data;
 		}
 	}
@@ -227,6 +229,7 @@ public class UserServiceImpl implements IUserService {
 		Group group = new Group();
 		group.setGroupName(groupName);
 		group.setUserid(userid);
+		group.setSwitchStatus(0);
 		int result = groupDao.insert(group);
 		if (result > 0) {
 			return getDataByUser(user);
@@ -456,4 +459,119 @@ public class UserServiceImpl implements IUserService {
 		return devDao.selectByPrimaryKey(devMac);
 	}
 
+	//向策略中添加操作
+	/*public DataObject addPloyOperate(Integer ployid, Integer hours, Integer minutes, Integer operateType,
+			Integer operateParam) {
+		DataObject data = new DataObject();
+		PloyOperate ployOperate = new PloyOperate();
+		ployOperate.setPloyid(ployid);
+		ployOperate.setHours(hours);
+		ployOperate.setMinutes(minutes);
+		ployOperate.setOperateType(operateType);
+		ployOperate.setOperateParam(operateParam);
+		int row = ployOperateDao.insert(ployOperate);//注意判断插入是否有效
+		//System.out.println("添加操作"+row);
+		if (row < 1) {
+			data.setError("Failed to add!");
+		} else {
+			data.setPloyOperateArr(new ArrayList<>());
+			data.getPloyOperateArr().addAll(ployOperateDao.selectByPloyid(ployid));
+		}
+		return data;
+	}
+*/
+	//向策略中添加操作
+	public DataObject addPloyOperate(Integer ployid, Integer hours, Integer minutes, Integer operateType,
+			Integer operateParam) {
+		DataObject data = new DataObject();
+		List<PloyOperate> list = ployOperateDao.selectByPloyid(ployid);
+		boolean flag = true;
+		for(PloyOperate obj: list) {
+			if(obj.getHours().equals(hours) && obj.getMinutes().equals(minutes) && 
+				obj.getOperateType().equals(operateType) && obj.getOperateParam().equals(operateParam)) {
+				data.setError("该指令已存在");
+				flag = false;
+			}
+		}
+		if(flag != false) {
+			PloyOperate ployOperate = new PloyOperate();
+			ployOperate.setPloyid(ployid);
+			ployOperate.setHours(hours);
+			ployOperate.setMinutes(minutes);
+			ployOperate.setOperateType(operateType);
+			ployOperate.setOperateParam(operateParam);
+			int row = ployOperateDao.insert(ployOperate);//注意判断插入是否有效
+			if (row < 1) {
+				data.setError("Failed to add!");
+			} else {
+				data.setPloyOperateArr(new ArrayList<>());
+				data.getPloyOperateArr().addAll(ployOperateDao.selectByPloyid(ployid));
+			}
+		}
+		return data;
+	}
+
+	public DataObject removePloyOperate(Integer id,Integer ployid,Integer userid) {
+		DataObject data = new DataObject();
+		ArrayList<Ploy> list = ployDao.selectByUserid(userid);
+		for(Ploy obj : list) {
+			if(obj.getId() == ployid) {
+				if(obj.getStatus() == 1) {//1为正在执行
+					data.setError("Please stop the ploy running");//策略执行时无法删除
+				}else if(obj.getStatus() == 0) {
+					int row = ployOperateDao.deleteByPrimaryKey(id);
+					if (row < 1) {
+						data.setError("Failed to delete!");
+					} else {
+						data.setPloyOperateArr(new ArrayList<>());
+						data.getPloyOperateArr().addAll(ployOperateDao.selectByPloyid(ployid));
+					}
+				}
+			}
+		}
+		return data;
+	}
+
+	
+	public DataObject getUseZigbeeMessage(Integer groupid, Integer userid) {
+		DataObject data = new DataObject();
+		ArrayList<Zigbee> zigbeelist = new ArrayList<>();// 所有集控器下在线的节点集合
+		ArrayList<Zigbee> zigbees = new ArrayList<>();   // 该用户下的所有在线节点且不存在操作组内
+		ArrayList<String> zigbeeMac = new ArrayList<>(); // 向组内添加元素的组内已存在的所有节点mac
+		ArrayList<Device> devices = devDao.selectByUserid(userid); // 用户下的所有集控器
+		ArrayList<GroupPair> groupPair = groupPairDao.selectByGroupid(groupid);//该组内的所有节点
+		//1获得集控器下所有在线的节点集合zigbeelist
+		for(Device dev : devices) {
+			ArrayList<Zigbee> list = zigbeeDao.selectBydevMac(dev.getDevMac());
+			for(Zigbee zb :list) {
+				if(zb.getZigbeeNet() == 1) {
+					zigbeelist.add(zb);
+				}
+			}
+		}
+		//2.获得操作组的已存在的节点地址zigbeeMac集合
+		for(GroupPair obj : groupPair) {
+			zigbeeMac.add(obj.getZigbeeMac());
+		}
+		//3.获取zigbeelist中不包含在操作组的节点集合zigbee
+		for(Zigbee zb : zigbeelist) {
+			if(!zigbeeMac.contains(zb.getZigbeeMac())) {
+				zigbees.add(zb);
+			}			
+	}
+		data.setDevArr(devices);
+		data.setZigbeeArr(zigbees);
+		return data;
+	}
+
+	
+	public Ploy getPloyForAddBroadcastPlan(Integer id) {
+		Ploy object = new Ploy();
+		object = ployDao.selectByPrimaryKey(id);
+		return object;
+	}
+	
+	
+	
+	
 }

@@ -9,7 +9,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import com.test.dao.DeviceAttrMapper;
 import com.test.domain.DeviceAttr;
 import com.test.domain.Group;
 import com.test.domain.GroupPair;
@@ -24,7 +26,6 @@ import com.test.util.UnusualUtils;
  * 
  */
 public class SocketOperate extends Thread {
-
 	// 指令
 	// static private String cmd_setMac = "mac:";
 	private final static String READ_STATUS = "FE0969030200000A00CA040000";
@@ -82,8 +83,8 @@ public class SocketOperate extends Thread {
 	}
 
 	private void readZigbeeReply(Zigbee zb, String strXML) {
+		// 更新节点状态
 		if ("00".equals(strXML.substring(50, 52))) {
-			// 更新节点状态
 			zb.setZigbeeNet(1);
 		} else if ("01".equals(strXML.substring(50, 52))) {
 			zb.setZigbeeNet(0);
@@ -106,21 +107,31 @@ public class SocketOperate extends Thread {
 			// 其他参数操作
 			ZigbeeAttr zigbeeAttr = SocketTool.selectZigbeeAttrByPrimaryKey(zb.getZigbeeMac());
 			if (zigbeeAttr != null) {
-				zigbeeAttr.setTemperature(Integer.valueOf(strXML.substring(42, 46), 16));// get the temperature
-				zigbeeAttr.setHumidity(Integer.valueOf(strXML.substring(46, 50), 16));// get the humidity
+				//未避免异常温度和湿度，添加if判断，大于100均不写入数据库
+				if((Integer.valueOf(strXML.substring(42, 46), 16)/100) < 100) {	
+					zigbeeAttr.setTemperature(Integer.valueOf(strXML.substring(42, 46), 16));// get the temperature
+				}
+				if((Integer.valueOf(strXML.substring(46, 50), 16)/100) < 100) {	
+					zigbeeAttr.setHumidity(Integer.valueOf(strXML.substring(46, 50), 16));// get the humidity
+				}
 				// update the database
 				SocketTool.updateZigbeeAttrByPrimaryKeySelective(zigbeeAttr);
 			} else {
 				zigbeeAttr = new ZigbeeAttr();
 //				zigbeeAttr.setType(3);
 				zigbeeAttr.setZigbeeMac(zb.getZigbeeMac());// set primary key
-				zigbeeAttr.setTemperature(Integer.valueOf(strXML.substring(42, 46), 16));// get the temperature
-				zigbeeAttr.setHumidity(Integer.valueOf(strXML.substring(46, 50), 16));// get the humidity
+				//未避免异常温度和湿度，添加if判断，大于100均不写入数据库
+				if((Integer.valueOf(strXML.substring(42, 46), 16)/100) < 100) {	
+					zigbeeAttr.setTemperature(Integer.valueOf(strXML.substring(42, 46), 16));// get the temperature
+				}
+				if((Integer.valueOf(strXML.substring(46, 50), 16)/100) < 100) {	
+					zigbeeAttr.setHumidity(Integer.valueOf(strXML.substring(46, 50), 16));// get the humidity
+				}
 				// insert data to the database
 				if (SocketTool.insertZigbeeAttrSelective(zigbeeAttr) > 0) {
-//					System.out.println("添加成功");
+
 				} else {
-//					System.out.println("添加失败");
+
 				}
 			}
 			UnusualUtils.RecordUnusualTemperatureToDB(zigbeeAttr);
@@ -136,28 +147,20 @@ public class SocketOperate extends Thread {
 
 	public void run() {
 		try {
-
 			InputStream in = deviceSocket.getSocket().getInputStream();
-
 			PrintWriter out = new PrintWriter(deviceSocket.getSocket().getOutputStream());
-
 			Zigbee zbtest;
-
 			Group grouptemp;
-
 			GroupPair gp;
-
 			ArrayList<Zigbee> zbTempList;
-			
+			//启动后发三遍错误帧,
 			if (timer == null) {
 				timer = new Timer();// 实例化Timer类
-
 				new Timer().schedule(new TimerTask() {
 					private PrintWriter timerOut = out;
 					private Integer count = 0;
-
 					public void run() {
-						myprint(this.timerOut, "E0E290202FFFF0A000801002FF000000");
+						myprint(this.timerOut, "E0E290202FFFF0A000801002FF000000");//错误帧
 						count++;
 						if (count == 3) {
 							this.cancel();
@@ -165,15 +168,17 @@ public class SocketOperate extends Thread {
 					}
 				}, 500, 500);// 毫秒
 
+				
+				//发三遍错误帧后每隔五秒发一个查询
 				timer.schedule(new TimerTask() {
 					private PrintWriter timerOut = out;
-
 					public void run() {
-						myprint(this.timerOut, "FE04250100000000");
-
+						myprint(this.timerOut, "FE04250100000000");//读取协调器mac地址帧
 					}
 				}, 5000, 5000);// 毫秒
 			}
+			
+			
 			
 			while (/* deviceSocket.getSocket().isConnected() */true) {
 				// 读取客户端发送的信息
@@ -182,7 +187,7 @@ public class SocketOperate extends Thread {
 				int length = 0;
 				int dataPoint = 0;
 				ArrayList<String> dataFrameList = new ArrayList<String>();
-				while ((length = in.read(temp)) != -1) {
+				while ((length = in.read(temp)) != -1) { //-1为文件读完的标志,当in.read()值等于-1时，代表数据读取完毕
 					dataPoint = 0;
 					strXML = new String(temp, 0, length);
 					dataFrameList.clear();
@@ -230,17 +235,17 @@ public class SocketOperate extends Thread {
 							dataPoint = length;
 						}
 					}
+					
 					//////////////////////////////////////////////////////////////////////
 					for (int i = 0; i < dataFrameList.size(); i++) {
-						strXML = dataFrameList.get(i);
-						
-						
+						strXML = dataFrameList.get(i);	
 //						System.out.println(new Date().toString() + " " + deviceSocket.getDevice().getDevMac() + ": " + strXML);
 						log.info(deviceSocket.getDevice().getDevMac() + ": " + strXML);
 						if (strXML.startsWith("FE0165010065")) {
-							strXML = strXML.replace("FE0165010065", "");
+							strXML = strXML.replace("FE0165010065", "");//未知指令由空指令代替
 						}
 						if (strXML.length() > 30 && strXML.startsWith("FE0D458100")) {// 查询回复mac地址+短地址
+							
 							if ("0000".equals(strXML.substring(26, 30))) {// 集控器mac地址
 								if (deviceSocket.getDevice().getDevMac() == null) {// 该端口第一次绑定设备
 									deviceSocket.getDevice().setDevMac(strXML.substring(10, 26));
@@ -277,7 +282,7 @@ public class SocketOperate extends Thread {
 
 								myprint(out, READ_STATUS);
 
-							} else if (strXML.length() > 30) {// zigbee节点mac地址
+							} else if (strXML.length() > 30) {// zigbee节点mac地址  ？
 								Zigbee zb = SocketTool.selectZigbeeByPrimaryKey(strXML.substring(10, 26));// 节点mac地址
 								if (zb != null) {
 									zb.setZigbeeSaddr(strXML.substring(26, 30));// 节点短地址
@@ -297,6 +302,8 @@ public class SocketOperate extends Thread {
 								}
 							}
 
+							
+							
 						} else if (strXML.length() >= 32 && strXML.startsWith("FE0D45C1")) {// 上报mac地址+短地址
 							if (deviceSocket.getDevice().getDevMac() != null) {
 								zbtest = SocketTool.selectZigbeeByPrimaryKey(strXML.substring(16, 32));// 节点mac地址
@@ -335,17 +342,16 @@ public class SocketOperate extends Thread {
 								zbtest = null;
 							}
 
+							
+							
 						} else if (strXML.length() >= 26 && strXML.startsWith("FE")
 								&& "29030200000A00CA0102".equals(strXML.substring(4, 24))) {// 电话号码
 							deviceSocket.getDevice().setGprsPhone(strXML.substring(25, strXML.length() - 1));// 设置电话号码
-
 							if (timer == null) {
 								timer = new Timer();// 实例化Timer类
-
 								new Timer().schedule(new TimerTask() {
 									private PrintWriter timerOut = out;
 									private Integer count = 0;
-
 									public void run() {
 										myprint(this.timerOut, "E0E290202FFFF0A000801002FF000000");
 										count++;
@@ -365,10 +371,11 @@ public class SocketOperate extends Thread {
 								}, 5000, 5000);// 毫秒
 							}
 
-						} else if (strXML.length() >= 52 && strXML.startsWith("FE18690202")
+							
+							
+						} else if (strXML.length() >= 52 && strXML.startsWith("FE18690202") && strXML.substring(22,26).equals("1200") 
 								&& "0ACA00".equals(strXML.substring(30, 36))) {// 查询灯状态应答帧
-							// Zigbee zb = SocketTool.selectZigbeeBySAddrAndDevMac(strXML.substring(10, 14),
-							// deviceSocket.getDevice().getDevMac());
+							//为解决假节点问题，在else if判断语句内添加strXML.substring(22,26).equals("1200");
 							Zigbee zb = SocketTool.selectZigbeeByPrimaryKey(strXML.substring(10, 26));
 							if (zb != null) {
 								readZigbeeReply(zb, strXML);
@@ -387,11 +394,12 @@ public class SocketOperate extends Thread {
 									
 									// 更新
 									readZigbeeReply(zb, strXML);
-									
 									// 查询节点信息
 								}
 								
 							}
+							
+							
 						} else if (strXML.length() >= 42 && strXML.startsWith("FE1C4584")) {// 节点上报信息应答帧
 							Zigbee zb = checkZigbee(strXML.substring(8, 12));
 							if (zb != null) {
@@ -415,14 +423,17 @@ public class SocketOperate extends Thread {
 							} else {
 								// 添加新节点
 							}
+							
+							
 						} else if (strXML.startsWith("FE0B29030200000A00CA0101XTB") && SocketTool.HeartBeatReport) {
 							// out.print("FE0969030200000A00CA010000");// 心跳包回复
 							// out.flush();
 							myprint(out, "FE0969030200000A00CA010000");
 						} else if (deviceSocket.getCmdPool().isEmpty()) {// 指令队列为空，拦截下面的比对操作
+						
+						
 						} else if (strXML.length() >= 26 && strXML.startsWith("FE096902")
 								&& "06".equals(strXML.substring(16, 18))) {// 开、关命令应答帧
-
 							for (SocketCmd sc : deviceSocket.getCmdPool()) {
 								if (sc == null) {
 									continue;
@@ -435,12 +446,24 @@ public class SocketOperate extends Thread {
 												if ("FFFF".equals(sc.getAddr_type())) {// 广播地址
 													zbtest = new Zigbee();
 													zbtest.setDevMac(deviceSocket.getDevice().getDevMac());
+													/*为页面集控器显示广播控制按钮的两种形式，修改集控器的switchStatus状态*/
+													DeviceAttr devAttr = SocketTool.selectDeviceAttrByDevMac(deviceSocket.getDevice().getDevMac());
+														devAttr.setZigbeeFinder(0);
+														SocketTool.updateDeviceAttrByPrimaryKeySelective(devAttr);
+													
+													/**/
 													if ("00".equals(strXML.substring(22, 24))) {// 关指令
 														zbtest.setZigbeeStatus(0);
+														//修改集控器广播控制状态
+														devAttr.setSwitchStatus(0);
 													} else if ("01".equals(strXML.substring(22, 24))) {// 开指令
 														zbtest.setZigbeeStatus(1);
+														//修改集控器广播控制状态
+														devAttr.setSwitchStatus(1);
 													}
 													SocketTool.updateZigbeeBydevMacSelectiveWhereOnline(zbtest);// 同一集控器地址的zigbee节点全部修改状态
+													/*更新deviceAttr的switchStatus为最新的状态*/
+													SocketTool.updateDeviceAttrByPrimaryKeySelective(devAttr);
 													deviceSocket.getCmdPool().remove(sc);// 将已执行指令从池中移除
 													zbtest = null;
 													break;// 必须跳出循环，否则数组越界崩溃
@@ -470,10 +493,18 @@ public class SocketOperate extends Thread {
 																&& zb.getZigbeeNet() == 1) {// 如果zigbee节点设备mac地址与集控器mac地址相同且在线
 															if ("00".equals(tempStr)) {// 关指令
 																zb.setZigbeeStatus(0);
+																/*为页面分组显示广播控制按钮的两种形式，修改分组的switchStatus状态*/
+																//修改分组控制状态
+																grouptemp.setSwitchStatus(0);
 															} else if ("01".equals(tempStr)) {// 开指令
 																zb.setZigbeeStatus(1);
+																//修改分组控制状态
+																grouptemp.setSwitchStatus(1);
 															}
 															SocketTool.updateZigbeeByPrimaryKeySelective(zb);// 更新数据库
+															/*更新group的switchStatus为最新的状态*/
+															SocketTool.updateGroupByPrimaryKeySelective(grouptemp);
+											
 														}
 													}
 												}
@@ -489,6 +520,8 @@ public class SocketOperate extends Thread {
 								}
 							}
 
+							
+							
 						} else if (strXML.length() >= 26 && strXML.startsWith("FE09690202")
 								&& "08".equals(strXML.substring(16, 18))) {// 调光命令应答帧
 
@@ -573,10 +606,18 @@ public class SocketOperate extends Thread {
 																&& zb.getZigbeeNet() == 1) {// 如果zigbee节点设备mac地址与集控器mac地址相同且在线
 															if (tempStr.equals("00")) {// 关指令
 																zb.setZigbeeStatus(0);
+																/*修改分组控制下的广播按钮类型（ON/DIM、OFF/DIM）*/
+																grouptemp.setSwitchStatus(0);
+															
 															} else if (tempStr.equals("01")) {// 开指令
 																zb.setZigbeeStatus(1);
+																grouptemp.setSwitchStatus(1);
+															
 															}
 															SocketTool.updateZigbeeByPrimaryKeySelective(zb);// 更新数据库
+															/*更新group的switchStatus为最新的状态*/
+															SocketTool.updateGroupByPrimaryKeySelective(grouptemp);
+															
 														}
 													}
 												}
@@ -623,6 +664,9 @@ public class SocketOperate extends Thread {
 									}
 								}
 							}
+							
+							
+							
 						} else if (strXML.length() >= 26 && strXML.startsWith("FE09690302FFFF0A")
 								&& strXML.endsWith("00")) {// 自定义广播指令应答帧，非标准指令
 							if (strXML.substring(16, 20).equals("0006")) {// 广播开关应答帧
@@ -637,13 +681,23 @@ public class SocketOperate extends Thread {
 										if (strXML.substring(22, 24).equals("00")) {// 成功?
 											zbtest = new Zigbee();
 											zbtest.setDevMac(deviceSocket.getDevice().getDevMac());
+											/*为页面集控器显示广播控制按钮的两种形式，修改集控器的switchStatus状态*/
+											DeviceAttr deviceAttr = SocketTool.selectDeviceAttrByDevMac(deviceSocket.getDevice().getDevMac());
+											/**/
 											if (strXML.substring(20, 22).equals("00")) {// 关指令
 												zbtest.setZigbeeStatus(0);
+												//修改集控器switchStstus状态
+												deviceAttr.setSwitchStatus(0);
+												
 											} else if (strXML.substring(20, 22).equals("01")) {// 开指令
 												zbtest.setZigbeeStatus(1);
+												//修改集控器switchStstus状态
+												deviceAttr.setSwitchStatus(1);
+												
 											}
 											SocketTool.updateZigbeeBydevMacSelectiveWhereOnline(zbtest);// 同一集控器地址的zigbee节点全部修改状态
-
+											/*更新deviceAttr的switchStatus为最新的状态*/
+											SocketTool.updateDeviceAttrByPrimaryKeySelective(deviceAttr);
 											zbtest = null;
 
 										}
@@ -676,6 +730,8 @@ public class SocketOperate extends Thread {
 									}
 								}
 							}
+							
+							
 						} else if (strXML.length() >= 26 && strXML.startsWith("FE09690202")
 								&& strXML.substring(14, 24).equals("0A04000100")) {// 添加分组应答帧
 							for (SocketCmd sc : deviceSocket.getCmdPool()) {
@@ -750,6 +806,8 @@ public class SocketOperate extends Thread {
 									}
 								}
 							}
+							
+							
 						} else if (strXML.length() >= 26 && strXML.startsWith("FE0969030200000A00CA05")) {// 开启节点发现命令帧
 							for (SocketCmd sc : deviceSocket.getCmdPool()) {
 								if (sc == null) {
@@ -776,7 +834,6 @@ public class SocketOperate extends Thread {
 										// 开新定时器线程计时，超 seconds 计时后修改数据库状态为0
 										new Timer().schedule(new TimerTask() {
 											private DeviceAttr myDeviceAttr = devAttr;
-
 											public void run() {
 												myDeviceAttr.setZigbeeFinder(0);
 												SocketTool.updateDeviceAttrByPrimaryKeySelective(myDeviceAttr);
@@ -794,11 +851,19 @@ public class SocketOperate extends Thread {
 							out.print("error: Unrecognized command header");// 命令头无法识别
 							out.flush();
 						}
-					}
-				}
+					}//for循环
+					
+					
+				}//内层while
+				
+				
+			
+				
+				
+				
 				break;
 
-			}
+			}//外层while
 
 		} catch (IOException ex) {
 

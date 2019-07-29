@@ -112,4 +112,10 @@
 		where groupid = #{groupid,jdbcType=INTEGER}
 		limit #{index,jdbcType=INTEGER},#{limit,jdbcType=INTEGER}
 	</select>
+	<select id="selectByGroupid" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from grouppair_table
+		where groupid = #{groupid,jdbcType=INTEGER}
+	</select>
 </mapper>

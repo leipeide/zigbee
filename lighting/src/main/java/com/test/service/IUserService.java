@@ -57,4 +57,13 @@ public interface IUserService {
 	public DataObject ployRefresh(Integer userid);
 	
 	public Device selectDeviceByDevMac(String devMac);
+	//向策略内添加操作
+	public DataObject addPloyOperate(Integer ployid, Integer hours, Integer minutes, Integer operateType,Integer operateParam);
+	//删除策略内操作
+	public DataObject removePloyOperate(Integer id,Integer ployid, Integer userid);
+	//获取用户下的集控器和集控器下的可用节点
+	public DataObject getUseZigbeeMessage(Integer groupid, Integer userid);
+	//根据策略id获取策略信息
+	public Ploy getPloyForAddBroadcastPlan(Integer id);
+	
 }
