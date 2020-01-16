@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.test.dao.UserCmdMessageMapper" >
+  <resultMap id="BaseResultMap" type="com.test.domain.UserCmdMessage" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="date" property="date" jdbcType="TIMESTAMP" />
+    <result column="cmd_type" property="cmdType" jdbcType="INTEGER" />
+    <result column="userid" property="userid" jdbcType="INTEGER" />
+    <result column="dev_mac" property="devMac" jdbcType="VARCHAR" />
+    <result column="cmd_data" property="cmdData" jdbcType="VARCHAR" />
+    <result column="param1" property="param1" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, date, cmd_type, userid, dev_mac, cmd_data, param1
+  </sql>
+  <insert id="insert" parameterType="com.test.domain.UserCmdMessage" >
+    insert into user_cmd_message (id, date, cmd_type, userid, dev_mac, cmd_data, param1)
+    values (#{id,jdbcType=INTEGER}, #{date,jdbcType=TIMESTAMP}, #{cmdType,jdbcType=INTEGER}, #{userid,jdbcType=INTEGER}, #{devMac,jdbcType=VARCHAR}, #{cmdData,jdbcType=VARCHAR}, 
+      #{param1,jdbcType=VARCHAR})
+  </insert> 
+  <select id="selectLastCmd" resultMap="BaseResultMap"
+		parameterType="java.lang.String">
+		select *from user_cmd_message where id=(select max(id) from user_cmd_message)
+	</select>
+</mapper>
