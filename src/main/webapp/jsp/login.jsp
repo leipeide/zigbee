@@ -12,7 +12,7 @@
  	<script type="text/javascript" src="<%=request.getContextPath()%>/jsp/Vue.js"></script>
 	<style>
 		html{
-			background: url('<%=request.getContextPath()%>/jsp/loginbg.jpg') no-repeat center center fixed;
+			background: url('<%=request.getContextPath()%>/jsp/image/loginbg.jpg') no-repeat center center fixed;
 			-webkit-background-size: cover;
 			-moz-background-size: cover;
 			-o-background-size: cover;
@@ -84,11 +84,8 @@
 	flags.error = null;
 
 	var jsonStr = '<%=request.getAttribute("responseJson")%>';
-	// alert(jsonStr);
 	if (jsonStr != 'null') {
-		// alert(jsonStr);
 		var responseJson = JSON.parse(jsonStr);
-		// alert(responseJson.error);
 		flags.error = responseJson.error;
 	}
 	
@@ -99,7 +96,6 @@
 		},
 		methods: {
 			regist: function(event) {
-				// alert(mainform.username.value + "\n" + mainform.password.value);
 				if (flags.hidden == true) {
 					flags.hidden = false;
 				} else if (mainform.password.value != mainform.passwordRepeat.value) {

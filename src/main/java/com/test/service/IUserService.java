@@ -65,5 +65,11 @@ public interface IUserService {
 	public DataObject getUseZigbeeMessage(Integer groupid, Integer userid);
 	//根据策略id获取策略信息
 	public Ploy getPloyForAddBroadcastPlan(Integer id);
+	//根据报警信息id删除报警信息
+	public DataObject deleteAlarms(String[] alarmId, int userid);
+	//通过邮箱找回用户,并发送验证码给邮箱
+	public DataObject SendVerificationCodeByEmail(String email);
+	//验证验证码并找回密码
+	public DataObject findUserPasswordByEmailAndCheckCode(String email, String verCode);
 	
 }

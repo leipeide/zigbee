@@ -14,7 +14,8 @@ import java.util.Timer;
 public class SocketThread extends Thread {
 	private ServerSocket serverSocket = null;
 	private Timer timer = null;
-
+	//private DeviceSocket devSocket = new DeviceSocket();
+	
 	public SocketThread(ServerSocket serverScoket) {
 		try {
 			if (null == serverSocket) {
@@ -37,6 +38,7 @@ public class SocketThread extends Thread {
 		timer = new Timer();
 		//线程开启，等待10ms以后，每隔20s执行一次PloyThread
 		timer.schedule(new PloyThread(), 10, 20 * 1000);  
+		
 		while (!this.isInterrupted()) {
 			try {
 				DeviceSocket devSocket = new DeviceSocket();

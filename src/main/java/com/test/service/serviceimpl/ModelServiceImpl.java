@@ -6,6 +6,9 @@ import java.util.LinkedList;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.test.dao.AlarmMapper;
 import com.test.dao.DeviceAttrMapper;
 import com.test.dao.DeviceMapper;
 import com.test.dao.GroupMapper;
@@ -14,6 +17,7 @@ import com.test.dao.PloyMapper;
 import com.test.dao.PloyOperateMapper;
 import com.test.dao.ZigbeeAttrMapper;
 import com.test.dao.ZigbeeMapper;
+import com.test.domain.Alarm;
 import com.test.domain.Device;
 import com.test.domain.DeviceAttr;
 import com.test.domain.Group;
@@ -48,6 +52,8 @@ public class ModelServiceImpl implements IModelService {
 	private PloyOperateMapper ployOperateDao;
 	@Autowired
 	private DeviceAttrMapper deviceAttrDao;
+	@Autowired
+	private AlarmMapper alarmDao;
 
 	@Override
 	public LayuiTableModel getDeviceTableDataByUserid(int userid, int page, int limit) {
@@ -397,4 +403,66 @@ public class ModelServiceImpl implements IModelService {
 		return ltModel;
 	}
 
+	@Override
+	public LayuiTableModel getAlarmMessageTableDataByUserid(int userid, int page, int limit) {
+		LayuiTableModel ltModel = new LayuiTableModel();
+		ArrayList<Alarm> alarmList = null;
+		// 第一步，查询页数
+		ltModel.setCount(alarmDao.selectAlarmNumberByUserid(userid));
+		int pageCount = ltModel.getCount() / limit;
+		if (ltModel.getCount() % limit > 0) {
+			pageCount++;
+		}
+		// 第二步，判断页面是否越界
+		if (0 < page && page <= pageCount) {
+			// 分页查找数据
+			// 1. 分页查找用户报警信息
+			alarmList = alarmDao.selectByUseridPaged(userid, (page - 1) * limit, limit);
+			ltModel.setCode(0);
+			ltModel.setMsg("");
+		} else {
+			ltModel.setCode(1);
+			//ltModel.setMsg("数据读取越界！");
+			ltModel.setMsg("Data Reading Crossing Borders!");
+			return ltModel;
+		}
+		// 第三步，返回数据
+		ltModel.setData(new LinkedList<Object>());
+		ltModel.getData().addAll(alarmList);
+		return ltModel;	
+		
+	}
+
+	@Override
+	public LayuiTableModel getAlarmMessageTableDataByUseridAndDevmac(int userid, String deviceMac, int page,
+			int limit) {
+		LayuiTableModel ltModel = new LayuiTableModel();
+		ArrayList<Alarm> alarmList = null;
+		// 第一步，查询页数
+		ltModel.setCount(alarmDao.selectAlarmNumberByUseridAndDev(userid,deviceMac));
+		int pageCount = ltModel.getCount() / limit;
+		if (ltModel.getCount() % limit > 0) {
+			pageCount++;
+		}
+		// 第二步，判断页面是否越界
+		if (0 < page && page <= pageCount) {
+			// 分页查找数据
+			// 1. 分页查找用户报警信息
+			alarmList = alarmDao.selectByUseridDevMacPaged(deviceMac,userid, (page - 1) * limit, limit);
+			ltModel.setCode(0);
+			ltModel.setMsg("");
+		} else {
+			ltModel.setCode(1);
+			//ltModel.setMsg("数据读取越界！");
+			ltModel.setMsg("Data Reading Crossing Borders!");
+			return ltModel;
+		}
+		// 第三步，返回数据
+		ltModel.setData(new LinkedList<Object>());
+		ltModel.getData().addAll(alarmList);
+		return ltModel;	
+		
+	}
+
+	
 }

@@ -17,8 +17,7 @@
 	</resultMap>
 	<sql id="Base_Column_List">
 		zigbee_mac, version, type, temperature, humidity, power, min_power, param1,
-		param2,
-		param3, param4, param5
+		param2,param3, param4, param5
 	</sql>
 	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
 		parameterType="java.lang.String">

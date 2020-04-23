@@ -128,7 +128,10 @@
 					onclick="GroupsHide()"><spring:message code="Groups"/></a></li>
 				<li class="layui-nav-item"><a href="javascript:;"
 					onclick="PloysHide()"><spring:message code="Ploys"/></a></li>
-			   <li class="layui-nav-item"><a href="javascript:;"><spring:message code="language"/></a>
+				<li class="layui-nav-item"><a href="javascript:;"
+					onclick="AlarmHide()"><spring:message code="Alarm"/><span
+						class="layui-badge" id="warnningNum"></span></a></li>
+			    <li class="layui-nav-item"><a href="javascript:;"><spring:message code="language"/></a>
 					<dl  class="layui-nav-child">
 						<dd><a href="javascript:;" onclick="English()"><spring:message code="language.en" /></a></dd>
 						<dd><a href="javascript:;" onclick="Chinese()"><spring:message code="language.cn" /></a></dd>  
@@ -164,33 +167,39 @@
 		<%--默认进入首页时主体区展示的是集控器信息 --%>
 		<%--隐藏input js动态设置value,作为数据传递的桥梁 ，暂时未用，已用其它的保存参数，用时放到layui-body内--%>
         <%--<input type="text" value="" id="getData" style="display:none" autocomplete="off" class="layui-input"> --%>
-		
 		<div class="layui-body">
 			<form class="layui-form">
-			<iframe style="height: 3px" name="fname" frameborder="0" 
+				<iframe style="height: 3px" name="fname" frameborder="0" 
 					scrolling="no" width="100%" src="" class="body-frame"></iframe>
 				<div style="min-height: 500px;">
+					<%-- 集控器区域 --%>
 					<div id="controlDiv" style="display: block;">
 						<div id="allDeviceDiv" style="display: block;">
 							<table id="allDeviceTable" lay-filter="allDeviceTableFilter" class="layui-table"></table></div>
 						<div id="nodeDiv" style="display: none;">
 							<table id="nodeTable" lay-filter="nodeTableFilter" class="layui-table"></table></div>
 					</div>
-					
+					<%-- 分组区域 --%>
 					<div id="GroupsDiv" style="display: none;">
 						<div id="allGroupsDiv" style="display: block;">
 							<table id="allGroupsTable" lay-filter="allGroupsTableFilter" class="layui-table"></table></div>
 						<div id="oneGroupsDiv" style="display: none;">
 							<table id="oneGroupsTable" lay-filter="oneGroupsTableFilter" class="layui-table"></table></div>
 					</div>
-					
+					<%-- 策略区域 --%>
 					<div id="PloysDiv" style="display: none;">
 						<div id="allPloyDiv" style="display: block;">
 							<table id="allPloysTable" lay-filter="allPloysTableFilter" class="layui-table"></table></div>
 						<div id="onePloyDiv" style="display: none;">
 							<table id="onePloysTable" lay-filter="onePloysTableFilter" class="layui-table"></table></div>
 					</div>
+					<%-- 报警区域 --%>
+					<div id="AlarmsDiv" style="display: none;">
+						<div id="allAlarmsDiv" style="display: block;">
+							<table id="allAlarmsTable" lay-filter="allAlarmsTableFilter" class="layui-table"></table></div>
+					</div>
 					
+					<%-- 用户信息区域 --%>
 					<div id="UserInfo" style="display: none;">
 						<div id="userMessageDiv" style="display: block;">
 							<div><blockquote class="layui-elem-quote layui-quote-nm">
@@ -207,7 +216,7 @@
 									<label id="um-phone"></label></div>
 							</div>
 						</div>
-						
+						<%-- 密码重置区域 --%>
 						<div id="passwordResetDiv" style="display: none;">
 							<div><blockquote class="layui-elem-quote layui-quote-nm">
 									<font size='5'><spring:message code="PasswordReset" /></font></blockquote>
@@ -270,6 +279,7 @@
 	    var GroupPair = jsonObj.groupPairArr;  // 用户控制组pair对象集合
 	    var Ploy = jsonObj.ployArr;     // 用户策略对象集合
 	    var User = jsonObj.user;        // 该用户信息对象
+	    var Alarms = jsonObj.alarm; // 该用户的报警信息
 	    var zigbeeArr = jsonObj.zigbeeArr;  // 用户节点对象集合
 	    var zigbeeSet = new Array();        // 初始化节点数组，为后面提供
 	    var ploySet = new Array();        // 初始化策略数组，为后面提供
@@ -277,9 +287,10 @@
 	    var controlDiv = document.getElementById("controlDiv"); // 主体区域：集控器区域块
 	    var GroupsDiv = document.getElementById("GroupsDiv"); // 主体区域：控制组区域块
 	    var PloysDiv = document.getElementById("PloysDiv"); // 主体区域：策略区域块
+	    var AlarmsDiv = document.getElementById("AlarmsDiv"); // 主体区域：报警信息区域块
 	    var UserInfo = document.getElementById("UserInfo"); // 主体区域：用户信息区域块
-	    var leftNavAll =  document.getElementById("leftNavAll");//左边导航栏区域：所有
-	    var leftNavOne =  document.getElementById("leftNavOne");//左边导航栏区域 ：单个
+	    var leftNavAll = document.getElementById("leftNavAll");//左边导航栏区域：所有
+	    var leftNavOne = document.getElementById("leftNavOne");//左边导航栏区域 ：单个
 	    var pageTimer = {}; // 定义定时器全局变量
 	    var tableRefreshCount = 0;  //表格刷新计数
 	    var mouse_x ; // 监听鼠标 
@@ -289,7 +300,8 @@
 	    var deviceMacSaveSpace = null; // devmac暂存空间
 	    var groupAddrSaveSpace = null; // groupAddr暂存空间
 	    var ployidSaveSpace = null; // ployid暂存空间
-	   
+        
+	    document.getElementById("warnningNum").innerHTML = Alarms.length; //插入报警的数量
 	    document.getElementById("UserName").innerHTML = User.username; // 水平导航用户信息区域插入用户名
 	 	/*
 	 	*.刷新用户数据
@@ -335,8 +347,8 @@
 	 	    }
 	 	  });
 	 	}
-	 	pageTimer.timer1 = setInterval("intervalRefresh()",5000);//定时刷新，单位毫秒
-	 	pageTimer.timer2 = setInterval("tableRefresh()",1000*60);
+	 	pageTimer.timer1 = setInterval("intervalRefresh()",5000);//5秒钟定时刷新一次数据，单位毫秒
+	 	pageTimer.timer2 = setInterval("tableRefresh()",1000*60); //1分钟未操作重载表格
 	 	function userDataRefresh(data) {
 		     Devices = data.devArr;   // 用户集控器对象集合
 		     DevAttrArr = data.devAttrArr; // 集控器对象参数集合
@@ -345,50 +357,76 @@
 		     GroupPair = data.groupPairArr;
 		     User = data.user;        // 该用户信息对象
 		     zigbeeArr = data.zigbeeArr;  // 用户节点对象集合
-		    if(controlDiv.style.display == "block" && GroupsDiv.style.display == "none" &&  PloysDiv.style.display == "none" &&  UserInfo.style.display == "none"){
-				//1.集控器导航栏更新
-		    	leftNavAll.innerHTML = "<a href='javascript:;' onclick='allDeviceTable()'><spring:message code='Nav.AllContorllers'/></a>";
-	 			inner = " ";
-	 			for(var i = 0; i < Devices.length; i++){
-	  				inner = inner + "<li class='layui-nav-item layui-nav-itemed'><a href='javascript:;' onclick='nodeMessage(this.id)' name='dev'></a></li>";
-	 			}
-	 			leftNavOne.innerHTML = inner;
-	 			var aDevice = " ";
-	 			aDevice = document.getElementsByName("dev");
-	 			for(var i = 0; i < aDevice.length; i++){
-	 				aDevice[i].innerHTML = Devices[i].devName;
-	 				aDevice[i].id = "devNavId-" + Devices[i].devMac;
-	 			}
+		     Alarms = data.alarm;   //用户报警对象集合
+		     document.getElementById("warnningNum").innerHTML = Alarms.length; //插入报警的数量
+		     if(controlDiv.style.display == "block" && GroupsDiv.style.display == "none" 
+		    		&&  PloysDiv.style.display == "none" &&  UserInfo.style.display == "none"
+		    		&& AlarmsDiv.style.display == "none"){
+					//1.集控器导航栏更新
+			    	leftNavAll.innerHTML = "<a href='javascript:;' onclick='allDeviceTable()'><spring:message code='Nav.AllContorllers'/></a>";
+		 			inner = " ";
+		 			for(var i = 0; i < Devices.length; i++){
+		  				inner = inner + "<li class='layui-nav-item layui-nav-itemed'><a href='javascript:;' onclick='nodeMessage(this.id)' name='dev'></a></li>";
+		 			}
+		 			leftNavOne.innerHTML = inner;
+		 			var aDevice = " ";
+		 			aDevice = document.getElementsByName("dev");
+		 			for(var i = 0; i < aDevice.length; i++){
+		 				aDevice[i].innerHTML = Devices[i].devName;
+		 				aDevice[i].id = "devNavId-" + Devices[i].devMac;
+		 			}
 	 			
-			}else if(controlDiv.style.display == "none" && GroupsDiv.style.display == "block" &&  PloysDiv.style.display == "none" &&  UserInfo.style.display == "none"){
-				//2.控制组导航栏更新
-				leftNavAll.innerHTML = "<a href='javascript:;'onclick='allGroupsTable()'><spring:message code='Nav.AllGroups'/></a>";
-	 			inner = " ";
-	 			for(var i = 0; i < Groups.length; i++){
-	 				inner = inner + "<li class='layui-nav-item layui-nav-itemed'><a href='javascript:;' onclick='oneGroupMessage(this.id)' name='group'></a></li>";
-	 			}
-	 			leftNavOne.innerHTML = inner;
-	 			var aGroup = " ";
-	 			aGroup = document.getElementsByName("group");
-	 			for(var i = 0; i < aGroup.length; i++){
-	 				aGroup[i].innerHTML = Groups[i].groupName;
-	 				aGroup[i].id = "groupNavId-" + Groups[i].groupid;
-	 			}
+			}else if(controlDiv.style.display == "none" && GroupsDiv.style.display == "block" 
+					&& PloysDiv.style.display == "none" &&  UserInfo.style.display == "none"
+					&& AlarmsDiv.style.display == "none"){
+					//2.控制组导航栏更新
+					leftNavAll.innerHTML = "<a href='javascript:;'onclick='allGroupsTable()'><spring:message code='Nav.AllGroups'/></a>";
+		 			inner = " ";
+		 			for(var i = 0; i < Groups.length; i++){
+		 				inner = inner + "<li class='layui-nav-item layui-nav-itemed'><a href='javascript:;' onclick='oneGroupMessage(this.id)' name='group'></a></li>";
+		 			}
+		 			leftNavOne.innerHTML = inner;
+		 			var aGroup = " ";
+		 			aGroup = document.getElementsByName("group");
+		 			for(var i = 0; i < aGroup.length; i++){
+		 				aGroup[i].innerHTML = Groups[i].groupName;
+		 				aGroup[i].id = "groupNavId-" + Groups[i].groupid;
+		 			}
 				
-			}else if(controlDiv.style.display == "none" && GroupsDiv.style.display == "none" &&  PloysDiv.style.display == "block" &&  UserInfo.style.display == "none"){
-				//3.策略导航栏更新
-				leftNavAll.innerHTML = "<a href='javascript:;'onclick='allPloysTable()'><spring:message code='Nav.AllPloys'/></a>";
-	 			inner = " ";
-	 			for(var i = 0; i < Ploy.length; i++){
-	 				inner = inner + "<li class='layui-nav-item layui-nav-itemed'><a href='javascript:;' onclick='onePloyMessage(this.id)' name='ploy'></a></li>";
-	 			}
-	 			leftNavOne.innerHTML = inner;
-	 			var aPloy = " ";
-	 			aPloy = document.getElementsByName("ploy");
-	 			for(var i = 0; i < aPloy.length; i++) {
-	 				aPloy[i].innerHTML = Ploy[i].ployName;
-	 				aPloy[i].id = "ployNavId-" +  Ploy[i].id;
-	 			}
+			}else if(controlDiv.style.display == "none" && GroupsDiv.style.display == "none" 
+					&& PloysDiv.style.display == "block" && UserInfo.style.display == "none"
+					&& AlarmsDiv.style.display == "none"){
+					//3.策略导航栏更新
+					leftNavAll.innerHTML = "<a href='javascript:;'onclick='allPloysTable()'><spring:message code='Nav.AllPloys'/></a>";
+		 			inner = " ";
+		 			for(var i = 0; i < Ploy.length; i++){
+		 				inner = inner + "<li class='layui-nav-item layui-nav-itemed'><a href='javascript:;' onclick='onePloyMessage(this.id)' name='ploy'></a></li>";
+		 			}
+		 			leftNavOne.innerHTML = inner;
+		 			var aPloy = " ";
+		 			aPloy = document.getElementsByName("ploy");
+		 			for(var i = 0; i < aPloy.length; i++) {
+		 				aPloy[i].innerHTML = Ploy[i].ployName;
+		 				aPloy[i].id = "ployNavId-" +  Ploy[i].id;
+		 			}
+	 			
+			}else if(controlDiv.style.display == "none" && GroupsDiv.style.display == "none" 
+					&& PloysDiv.style.display == "none" && UserInfo.style.display == "none"
+					&& AlarmsDiv.style.display == "block"){
+				    //4.报警信息导航栏更新
+					leftNavOne.innerHTML = ""; //清空leftNavOne
+					leftNavAll.innerHTML = "<a href='javascript:;'><spring:message code='Nav.viewAlarmByDevice'/></a><d1 class='layui-nav-child' id='navAlarmDD'></d1>";
+		 			inner = " ";
+					for(var i = 0; i < Devices.length; i++){
+		  				inner = inner + " <dd><a href='javascript:;' onclick='getAlarmMessageByDev(this.id)' name='ddOfDev'></a></dd>";
+		 			}
+					document.getElementById("navAlarmDD").innerHTML = inner;
+		 			var aDevice = " ";
+		 			aDevice = document.getElementsByName("ddOfDev");
+		 			for(var i = 0; i < aDevice.length; i++){
+		 				aDevice[i].innerHTML = Devices[i].devName;
+		 				aDevice[i].id = "devNavId-" + Devices[i].devMac;
+		 			}
 			}
 		  //.保存节点数据；注意：弄清在哪里使用过，能否不通过初始登录时的数据进行js操作
 				 for (var i in data.zigbeeArr) {
@@ -486,6 +524,14 @@
 				        	id:ployidSaveSpace
 					  	  }
 					  });	
+					//7.重载报警信息表格
+					 table.reload('allAlarmsTable', {
+	            		   url:localhost+'/model/alarms.do'
+	            		   ,where:{
+	            			   userid : User.id,
+			     	   		 }
+	            		});
+				    
 				});	
 				tableRefreshCount = 0;
 	        }
@@ -586,7 +632,7 @@
 		  	this.bindParam = bindParam; // 绑定参数(组id、集控器mac地址、节点mac地址)
 		  	this.timeZone = timeZone; // 时区(时间差值，单位分钟) 
 		/*
-		      注意：ploy对象所有属性需要添加完整，要不会有错误
+		  注意：ploy对象所有属性需要添加完整，要不会有错误
 		  this.currentOperate = new PloyOperate(0, 0, 0, 1, 0);
 	      this.operateArray = new Array();
 		  this.operateBackUp;
@@ -1024,17 +1070,37 @@
 				    deleteBroadcastPlan(opdata); // 删除策略内的定时操作
 				} 
 			 });
+			
+			//13.监听报警信息表格头部工具栏
+			 table.on('toolbar(allAlarmsTableFilter)', function(obj){
+				 var checkStatus = table.checkStatus(obj.config.id); 
+			   	 var alarmdata = checkStatus.data; 
+			 	 switch(obj.event){
+			         case 'removeAlarmMessage':
+			        	deleteAlarmMessage(alarmdata); // 删除报警信息
+			      	    break;
+			    		};
+			  });
+			
+			
 		}); 
 	   
+	
 /*************************************控制主体区域*******************************************/	    
-	    if(controlDiv.style.display == "block" && GroupsDiv.style.display == "none" &&  PloysDiv.style.display == "none" &&  UserInfo.style.display == "none"){
- 			showAllDevice();
+	   if(controlDiv.style.display == "block" 
+	    		&& GroupsDiv.style.display == "none" 
+	    		&& PloysDiv.style.display == "none" 
+	    		&& UserInfo.style.display == "none"
+	    		&& AlarmsDiv.style.display == "none"){
+ 			
+	    	showAllDevice();
 	    }
 	    //1.点击水平导航栏，切换主体区域
 	   function ControllersHide(){ 
 		   controlDiv.style.display = "block";
 		   GroupsDiv.style.display = "none";
 		   PloysDiv.style.display = "none";
+		   AlarmsDiv.style.display = "none";
 		   UserInfo.style.display = "none";
 		   showAllDevice();
 	   } 
@@ -1042,6 +1108,7 @@
 		   GroupsDiv.style.display = "block";
 		   controlDiv.style.display = "none";
 		   PloysDiv.style.display = "none";
+		   AlarmsDiv.style.display = "none";
 		   UserInfo.style.display = "none";
 		   showAllGroups();
 	   }
@@ -1049,14 +1116,24 @@
 		   PloysDiv.style.display = "block";
  		   GroupsDiv.style.display = "none";
 		   controlDiv.style.display = "none";
+		   AlarmsDiv.style.display = "none";
 		   UserInfo.style.display = "none";
 		   showAllPloys();
 	   }  
+ 	   function AlarmHide(){
+ 		   AlarmsDiv.style.display = "block";
+ 		   PloysDiv.style.display = "none";
+		   GroupsDiv.style.display = "none";
+		   controlDiv.style.display = "none";
+		   UserInfo.style.display = "none";
+		   showAllAlarmMessages();
+ 	   }
  	   function UserInfoHide(){
 		   UserInfo.style.display = "block";
  		   PloysDiv.style.display = "none";
 		   GroupsDiv.style.display = "none";
 		   controlDiv.style.display = "none";
+		   AlarmsDiv.style.display = "none";
 		   inner1 = "<div class='layui-nav-item'><a href='javascript:;' onclick='changePassword()'><i class='layui-icon layui-icon-home' style='font-size: 30px;'></i> <spring:message code='Nav.PasswordReset' /></a></div>";
 		   inner = "<div class='layui-nav-item'><a href='javascript:;' onclick='userInformation()'><i class='layui-icon layui-icon-user' style='font-size: 30px;'></i> <spring:message code='Nav.UserInformation'/></a></div>";
 		   leftNavAll.innerHTML = inner;
@@ -1111,8 +1188,27 @@
  			}
  			allPloysTable();
  	    }
- 		//5.显示用户信息资料
- 		function userInformation() {
+	   
+ 	   //5.显示所有报警信息以及处理左侧导航栏
+	   function showAllAlarmMessages(){
+			leftNavOne.innerHTML = ""; //清空leftNavOne 
+			leftNavAll.innerHTML = "<a href='javascript:;'><spring:message code='Nav.viewAlarmByDevice'/></a><d1 class='layui-nav-child' id='navAlarmDD'></d1>";
+ 			inner = " ";
+			for(var i = 0; i < Devices.length; i++){
+  				inner = inner + " <dd><a href='javascript:;' onclick='getAlarmMessageByDev(this.id)' name='ddOfDev'></a></dd>";
+ 			}
+			document.getElementById("navAlarmDD").innerHTML = inner;
+ 			var aDevice = " ";
+ 			aDevice = document.getElementsByName("ddOfDev");
+ 			for(var i = 0; i < aDevice.length; i++){
+ 				aDevice[i].innerHTML = Devices[i].devName;
+ 				aDevice[i].id = "devNavId-" + Devices[i].devMac;
+ 			}
+			allAlarmMessageTable();
+	    }
+ 	   
+ 	   //6.显示用户信息资料
+ 	   function userInformation() {
  			document.getElementById("userMessageDiv").style.display = "block";
  			document.getElementById("passwordResetDiv").style.display = "none";
  			document.getElementById("um-username").innerHTML = 	"<spring:message code='Username'/>" + "：" + User.username;
@@ -1248,6 +1344,92 @@
 		    	});  
 	  		render;
 		}
+  	 
+  	
+  	 //4.所有报警信息表格
+	 function allAlarmMessageTable() {
+	  	  layui.use(['table'], function(){
+		    	 var table = layui.table;
+		    	 table.render({
+		    	   		 elem:'#allAlarmsTable'
+		    	   		 ,skin: 'line'
+		    	   		 ,url:localhost+'/model/alarms.do'
+		    	   		 ,where: { 
+		    	   			 userid : User.id
+		    	   			 }
+		    	   		 ,toolbar:'#toolbarAlarmMessages' 
+		    	   		 ,page: true 
+		    	   		 ,cols: [[
+		    	   			  {type:'checkbox',fixed: 'left'}
+		    	    		 ,{field: 'devMac', title: "<spring:message code='DeviceMac'/>"}
+		    	     		 ,{field: 'type', title: "<spring:message code='AlarmType'/>", sort: true,
+		    	     			 templet:function(d){
+			    	      			 if(d.type == 1){ //报警类型=1，超时报警
+			    	      				return "<spring:message code='UnconnectAlarm'/>";
+			    	      			 }else{
+			    	      				return '--';
+			    	      			 }
+		    	     				 
+			    	      			} 
+		    	     		 }
+		    	     		 ,{field: 'zigbeeMac', title: "<spring:message code='ZigbeeMac'/>",
+		    	     			 templet:function(d){
+			    	      			 if(d.zigbeeMac != null){ //报警类型=1，超时报警
+			    	      				return d.zigbeeMac;
+			    	      			 }else{
+			    	      				return '--';
+			    	      			 }
+		    	     				 
+			    	      		} 
+		    	     		 }
+		    	      		 ,{field: 'paramter', title: "<spring:message code='paramter'/>",
+			    	      		   templet:function(d){
+			    	      			 	if(d.paramter == "" || d.paramter == null) {
+			    	      			 		return '--';
+			    	      			 	}else{
+			    	      			 		return d.paramter;
+			    	      			 	}
+			    	      			} 
+	    	      		      }
+		    	      		 ,{field: 'date', title: "<spring:message code='Date'/>",sort: true,
+		    	      			 templet:function(d){
+		    	      				//处理时间
+		    	      				var time = new Date(d.date);//毫秒数转换成时间
+		    	      				var year = time.getFullYear(); //年
+		    	      				var month = time.getMonth() + 1; //月
+		    	      				var date = time.getDate(); //日
+		    	      				var hour = time.getHours() < 10 ? "0" + time.getHours(): time.getHours();//时
+		 							var minute = time.getMinutes() < 10 ? "0" + time.getMinutes(): time.getMinutes(); //分
+		 							var second = time.getSeconds() < 10 ? "0" + time.getSeconds(): time.getSeconds();//秒
+		    	      				return year + "-" + month +"-" + date + " " + hour + ":" + minute + ":" + second;
+		 							
+			    	      			} 
+		    	      		 }
+		    	         ]]
+		    	 	 });
+		    	});  
+	  		render;
+	  		
+		}
+  	 
+  	//按照集控器mac地址查看报警信息
+  	function getAlarmMessageByDev(leftNavDevId){
+  		 var arr = leftNavDevId.split("-"); 
+ 	     var devMac = arr[1];
+ 	     getAlarmMessageTableByDev(devMac);
+  	}
+  	function getAlarmMessageTableByDev(devMac){  //按照集控器获取报警信息
+  		 layui.use(['table'], function(){
+	    	 var table = layui.table;
+	  		 table.reload('allAlarmsTable', {
+	  		   url:localhost+'/model/getAlarms.do'
+	  		   ,where:{
+	  			   userid : User.id
+	   			   ,deviceMac:devMac
+	   	   		 }
+	  		});
+  		});
+  	}
   	 
   	function nodeMessage(leftNavDevId) {
 	    var arr = leftNavDevId.split("-"); 
@@ -2296,8 +2478,8 @@
 	  			              }
 	  			            },
 	  			            error: function() {
-	  			            	alert("出错了");
-	  			            	//layer.msg("<spring:message code='Connectionfailure'/>"+"!");
+	  			            	//alert("出错了");
+	  			            	layer.msg("<spring:message code='Connectionfailure'/>"+"!");
 	  			            }
 	  			          });
   					} else if (newGroupName == "") {//点击取消返回的是null
@@ -3795,7 +3977,7 @@
 		          datatype: "json",
 		          success:function(datasource, textStatus, jqXHR) {
 		            var data = eval('(' + datasource + ')');
-		            if (data.error == null || data.error == "" || data.error == undefined) {
+		            if(data.error == undefined || data.error == "" || data.error == null) {
 		             	 layer.msg("<spring:message code='successfullyDeleted'/>"+"!");
 		             	 layui.use(['table'],function() {
 		           			 var table = layui.table;
@@ -3806,7 +3988,7 @@
 					     	   		 }
 			            		});
 		             	 });
-		            } else {
+		             } else {
 		            	if(data.error == "Failed to delete!"){
 		            		layer.alert("<spring:message code='failedToDelete'/>"+"!",{
 		    	 	    		title:"<spring:message code='error'/>",
@@ -3846,7 +4028,66 @@
 	    	});
 		}
 	}
-
+	
+	/**************以下为报警信息表格内的函数*******/
+	//1.删除报警信息
+	function deleteAlarmMessage(alarmdata){
+	    var alarmIdArr = []; //报警信息id数组
+	    for(var i=0; i < alarmdata.length; i++){ //选中多个报警信息进行删除
+	    	alarmIdArr[i] = alarmdata[i].id 
+	    	
+	    }	    
+		if(alarmIdArr.length > 0){
+			 $.ajax({
+		          type:"post",
+		          url:localhost + "/user/deleteAlarmMessage.do",
+		          data:{
+		        	 alarmIdArr : alarmIdArr.join(','),
+		        	 userid : User.id
+		          },
+		          async : true,
+		          datatype: "json",
+		          success:function(datasource, textStatus, jqXHR) {
+		            	var data = eval('(' + datasource + ')');
+		            	if(data.error == null || data.error == "" || data.error == undefined) {
+			             	 layer.msg("<spring:message code='successfullyDeleted'/>"+"!");
+			             		//重载表格
+					             layui.use(['table'],function() {
+				           			 var table = layui.table;
+				             		 table.reload('allAlarmsTable', {
+					            		   url:localhost+'/model/alarms.do'
+					            		   ,where:{
+					            			   userid : User.id,
+							     	   		 }
+					            		});
+				             	 	});
+			             	 
+			             } else if(data.error == "delete failed"){   //删除失败
+			            	 layer.msg("<spring:message code='failedToDelete'/>"+"!");
+			            	 
+			             } else if(data.error == "delete failed,no object"){
+			            	 layer.msg("<spring:message code='NoChoiceObj'/>"+"!");
+			             }  
+		          },
+		          error: function() {
+		        	layer.msg("<spring:message code='Connectionfailure'/>"+"!");
+		        	
+		          }
+		 
+			});  		
+		}else{
+			layer.alert("<spring:message code='NoChoiceObj'/>"+"!",{
+	    		title:"<spring:message code='error'/>",
+	    		closeBtn: 0,
+	 	        btn : "<spring:message code='btn.Close'/>",
+			    yes : function(index, layero) {
+		         	 layer.close(index);
+		        },
+	    	});
+		}
+		
+	}
+	
 /***************************************用户信息区域的功能函数***************************************/
 	//1.更改密码
 	function changePassword() {
@@ -4162,5 +4403,12 @@
      <script  type="text/html" id="barDeleteBroadcast">
   		<a class="layui-btn layui-btn-green layui-btn-xs" lay-event="deleteBroadcastPlan"><spring:message code="Delete"/></a>
     </script>
+    <%-- **********************AlarmMessage表格的toolbar或templet *********************** --%>   
+ 	<script type="text/html" id="toolbarAlarmMessages">   
+		<div class="layui-btn-container">	
+    		<button class="layui-btn layui-btn-sm"  lay-event="removeAlarmMessage"><spring:message code="DeleteAlarm"/></button>
+  		</div>
+    </script>
+    
 </body>
 </html>

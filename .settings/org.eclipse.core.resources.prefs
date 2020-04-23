@@ -1,4 +1,7 @@
 eclipse.preferences.version=1
+encoding//src/main/java/com/test/service/socket/SocketTool.java=UTF-8
 encoding//src/main/resources/jdbc.properties=UTF-8
-encoding//src/main/webapp/jsp/index.jsp=UTF-8
+encoding//src/main/resources/messages.properties=UTF-8
+encoding//src/main/webapp/jsp/VueIndex.jsp=UTF-8
 encoding//src/main/webapp/jsp/login.jsp=UTF-8
+encoding/<project>=UTF-8

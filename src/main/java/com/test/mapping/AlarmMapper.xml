@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.test.dao.AlarmMapper" >
+  <resultMap id="BaseResultMap" type="com.test.domain.Alarm" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="date" property="date" jdbcType="TIMESTAMP" />
+    <result column="dev_mac" property="devMac" jdbcType="VARCHAR" />
+    <result column="zigbee_mac" property="zigbeeMac" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="INTEGER" />
+    <result column="userid" property="userid" jdbcType="INTEGER" />
+    <result column="paramter" property="paramter" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, date, dev_mac, zigbee_mac, type, userid, paramter
+  </sql>
+  <insert id="insert" parameterType="com.test.domain.Alarm">
+		insert into alarm
+		(id, date, dev_mac, zigbee_mac, type, userid, paramter)
+		values(
+		#{id,jdbcType=INTEGER},
+		#{date,jdbcType=TIMESTAMP}, 
+		#{devMac,jdbcType=VARCHAR},
+		#{zigbeeMac,jdbcType=VARCHAR},
+		#{type,jdbcType=INTEGER},
+		#{userid,jdbcType=INTEGER},
+		#{paramter,jdbcType=VARCHAR}
+		)
+  </insert>
+  <delete id="deleteById" parameterType="java.lang.Integer">
+		delete from alarm
+		where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <select id="selectAlarmNumberByUserid" resultType="int">
+		SELECT
+		COUNT(id)
+		FROM alarm
+		WHERE userid =
+		#{userid,jdbcType=INTEGER}
+  </select>
+  <select id="selectByUseridPaged" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from alarm
+		where userid = #{userid,jdbcType=INTEGER}
+		limit
+		#{index,jdbcType=INTEGER},#{limit,jdbcType=INTEGER}
+   </select>	
+   <select id="selectByDeviceMacAndType" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />		
+		from alarm
+		where dev_mac = #{devMac,jdbcType=VARCHAR} and type = #{type,jdbcType=INTEGER}
+  </select>
+  <select id="selectByUserid" resultMap="BaseResultMap"
+		parameterType="java.lang.Integer">
+		select
+		<include refid="Base_Column_List" />
+		from alarm
+		where userid = #{userid,jdbcType=INTEGER}
+	</select>
+	<select id="selectAlarmNumberByUseridAndDev" resultType="int">
+		SELECT
+		COUNT(id)
+		FROM alarm
+		WHERE userid =
+		#{userid,jdbcType=INTEGER} AND dev_mac = #{devMac,jdbcType=VARCHAR}
+  </select>
+  <select id="selectByUseridDevMacPaged" resultMap="BaseResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from alarm
+		where userid = #{userid,jdbcType=INTEGER} AND dev_mac = #{devMac,jdbcType=VARCHAR}
+		limit
+		#{index,jdbcType=INTEGER},#{limit,jdbcType=INTEGER}
+  </select>	
+</mapper>

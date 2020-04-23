@@ -4,10 +4,13 @@ import java.util.ArrayList;
 //import java.util.HashMap;
 //import java.util.Map;
 import java.util.List;
+import java.util.Random;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.alibaba.fastjson.JSON;
+import com.test.dao.AlarmMapper;
 import com.test.dao.DeviceAttrMapper;
 import com.test.dao.DeviceMapper;
 import com.test.dao.GroupMapper;
@@ -17,6 +20,7 @@ import com.test.dao.PloyOperateMapper;
 import com.test.dao.UserMapper;
 import com.test.dao.ZigbeeAttrMapper;
 import com.test.dao.ZigbeeMapper;
+import com.test.domain.Alarm;
 import com.test.domain.DataObject;
 import com.test.domain.Device;
 import com.test.domain.DeviceAttr;
@@ -24,8 +28,7 @@ import com.test.domain.Group;
 import com.test.domain.GroupPair;
 import com.test.domain.Ploy;
 import com.test.domain.PloyOperate;
-//import com.test.domain.Group;
-//import com.test.domain.ReflectBeanUtils;
+import com.test.domain.SendJMail;
 import com.test.domain.User;
 import com.test.domain.Zigbee;
 import com.test.domain.ZigbeeAttr;
@@ -52,7 +55,11 @@ public class UserServiceImpl implements IUserService {
 	private PloyOperateMapper ployOperateDao;
 	@Autowired
 	private DeviceAttrMapper deviceAttrDao;
-
+	@Autowired
+	private AlarmMapper alarmDao;
+//	@Autowired
+	//private SendJMail sendJMailDao;
+	
 	public UserServiceImpl() {
 //		System.out.println("UserServiceImpl");
 	}
@@ -65,11 +72,12 @@ public class UserServiceImpl implements IUserService {
 		return userDao.selectByUsername(username);
 	}
 	
-	//refresh
-	public DataObject getDataByUser(User user) {
+	//refresh后来因前端添加报警模块，故刷新时增加了获取报警的信息集合
+	public DataObject getDataByUser(User user) { 
 		DataObject data = new DataObject();
 		data.setUser(user);
 		data.setDevArr(devDao.selectByUserid(user.getId()));
+		data.setAlarm(alarmDao.selectByUserid(user.getId()));
 		data.setZigbeeArr(new ArrayList<Zigbee>());
 		for (Device dev : data.getDevArr()) {
 			data.getZigbeeArr().addAll(zigbeeDao.selectBydevMac(dev.getDevMac()));  //zigbee<List>
@@ -460,27 +468,6 @@ public class UserServiceImpl implements IUserService {
 	}
 
 	//向策略中添加操作
-	/*public DataObject addPloyOperate(Integer ployid, Integer hours, Integer minutes, Integer operateType,
-			Integer operateParam) {
-		DataObject data = new DataObject();
-		PloyOperate ployOperate = new PloyOperate();
-		ployOperate.setPloyid(ployid);
-		ployOperate.setHours(hours);
-		ployOperate.setMinutes(minutes);
-		ployOperate.setOperateType(operateType);
-		ployOperate.setOperateParam(operateParam);
-		int row = ployOperateDao.insert(ployOperate);//注意判断插入是否有效
-		//System.out.println("添加操作"+row);
-		if (row < 1) {
-			data.setError("Failed to add!");
-		} else {
-			data.setPloyOperateArr(new ArrayList<>());
-			data.getPloyOperateArr().addAll(ployOperateDao.selectByPloyid(ployid));
-		}
-		return data;
-	}
-*/
-	//向策略中添加操作
 	public DataObject addPloyOperate(Integer ployid, Integer hours, Integer minutes, Integer operateType,
 			Integer operateParam) {
 		DataObject data = new DataObject();
@@ -520,11 +507,12 @@ public class UserServiceImpl implements IUserService {
 					data.setError("Please stop the ploy running");//策略执行时无法删除
 				}else if(obj.getStatus() == 0) {
 					int row = ployOperateDao.deleteByPrimaryKey(id);
-					if (row < 1) {
-						data.setError("Failed to delete!");
-					} else {
+					if (row == 1) {
+						//data.setError("deleteSuccess!");
 						data.setPloyOperateArr(new ArrayList<>());
 						data.getPloyOperateArr().addAll(ployOperateDao.selectByPloyid(ployid));
+					} else {
+						data.setError("Failed to delete!");
 					}
 				}
 			}
@@ -569,6 +557,111 @@ public class UserServiceImpl implements IUserService {
 		Ploy object = new Ploy();
 		object = ployDao.selectByPrimaryKey(id);
 		return object;
+	}
+
+	@Override
+	public DataObject deleteAlarms(String[] alarmId, int userid) {
+		DataObject data = new DataObject();
+		List<Alarm> alarmList = new ArrayList<>();  //报警信息集合
+		int result = 0; //成功删除数量
+		if(alarmId.length>0) { // 选中了报警信息元素
+			for(int index=0; index < alarmId.length; index++) {
+				int id = Integer.parseInt(alarmId[index]);
+				if(alarmDao.deleteById(id) > 0) {
+					result = result + 1;
+				}
+			}
+			if(result == 0) {
+				data.setError("delete failed"); //删除失败
+			}
+		}else { //未选择报警信息
+			data.setError("delete failed,no object"); //删除失败，未选择报警信息
+		}
+		
+		return data;
+	}
+
+	
+	@Override
+	public DataObject SendVerificationCodeByEmail(String email) {
+		DataObject data = new DataObject();
+		User admin = null;
+	    admin = userDao.selectByEmail(email);
+	    //实例化一个发送邮件的对象
+	    SendJMail mySendMail = new SendJMail();
+	    //设置随机验证码
+		String verifyCode = "";
+		Random random = new Random();
+		for(int index = 0; index < 6; index++) {
+			verifyCode+=random.nextInt(10);
+		};
+		
+		if(admin != null) { //用户存在 
+			if(admin.getOperateNum() == null) {  //初次获取验证码
+				
+				//发送邮件
+				String emailMsg = 
+						"Dear user, you are in the process of password retrieval to obtain the verification code." + 
+					    "<br/>This verification code is " + verifyCode + ".If you do not operate yourself, please ignore it." +
+					    "<br/>（尊敬的用户，您正在进行密码找回获取验证码，此次验证码是"+verifyCode + "； 如非本人操作请忽略。）" ;
+				
+				boolean result = mySendMail.SendMail(admin.getEmail(), emailMsg);
+				
+				//更新user数据库中的vercode和operate_num
+				admin.setVercode(verifyCode);
+				if(result) {
+					admin.setOperateNum(1); //多次获取验证码
+				}
+				userDao.updateByPrimaryKeySelective(admin);
+				//设置用户
+				data.setUser(admin);
+				
+				
+			}else if(admin.getOperateNum() < 4) { // 多次获取验证码
+				//发送邮件
+				String emailMsg = 
+					"Dear user, you are in the process of password retrieval to obtain the verification code." + 
+				    "<br/>This verification code is " + verifyCode + ".If you do not operate yourself, please ignore it." +
+				    "<br/>（尊敬的用户，您正在进行密码找回获取验证码，此次验证码是"+verifyCode + "； 如非本人操作请忽略。）" ;
+				boolean result = mySendMail.SendMail(admin.getEmail(), emailMsg);
+				
+				//更新user数据库中的vercode和operate_num
+				admin.setVercode(verifyCode);
+				if(result) {
+					admin.setOperateNum(admin.getOperateNum() + 1); //多次获取验证码
+				}
+				userDao.updateByPrimaryKeySelective(admin);
+				//设置用户
+				data.setUser(admin);
+			
+			}else { 
+				data.setError("您今天的次数已超过4次，请明天再操作"); //错误提示用于前端提示，不要轻易修改
+				
+			}
+			
+		}else { //用户不存在
+			data.setError("未查找到用户，该邮箱未注册用户"); //错误提示用于前端提示，不要轻易修改
+			
+		}
+		return data;
+	}
+
+	
+	@Override
+	public DataObject findUserPasswordByEmailAndCheckCode(String email, String verCode) {
+		DataObject data = new DataObject();
+		User admin = null;
+	    admin = userDao.selectByEmail(email);
+	    if(admin != null) {
+	    	if(admin.getVercode().equals(verCode)) {
+	    		data.setUser(admin); //返回用户信息
+	    	}else {
+	    		data.setError("验证码错误"); //错误提示用于前端提示，不要轻易修改
+	    	}
+	    }else {
+	    	data.setError("未查找到用户，该邮箱未注册用户"); //错误提示用于前端提示，不要轻易修改
+	    }
+	    return data;
 	}
 	
 	

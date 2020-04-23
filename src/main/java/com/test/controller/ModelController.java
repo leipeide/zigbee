@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.test.domain.LayuiTableModel;
 import com.test.service.IModelService;
@@ -170,6 +171,7 @@ public class ModelController {
 
 	@RequestMapping("/ploys") // 根据userid返回策略控制列表
 	public void ploys(HttpServletRequest request, HttpServletResponse response) {
+		//System.out.println("进入ploy.do");
 		response.setCharacterEncoding("UTF-8");
 		response.setContentType("application/json; charset=utf-8");
 		String userid = request.getParameter("userid");
@@ -227,5 +229,70 @@ public class ModelController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	@RequestMapping("/alarms") // 根据用户id返回报警信息
+	public void alarms(HttpServletRequest request, HttpServletResponse response) {
+		response.setCharacterEncoding("UTF-8");
+		response.setContentType("application/json; charset=utf-8");
+		String userid = request.getParameter("userid");
+		String page = request.getParameter("page");
+		String limit = request.getParameter("limit");
+		if (userid == null || page == null || limit == null) {
+			LayuiTableModel model = new LayuiTableModel();
+			model.setCode(2);
+			model.setMsg("Parameters cannot be null!");
+			try {
+				response.getWriter().write(JSONObject.toJSONString(model));
+				System.out.println(JSONObject.toJSONString(model));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return;
+		}
+		LayuiTableModel ltmodel = modelService.getAlarmMessageTableDataByUserid(Integer.parseInt(userid),
+				Integer.parseInt(page), Integer.parseInt(limit));
+		String dataJson = JSONObject.toJSONString(ltmodel);
+		//System.out.println(JSONObject.toJSONString(ltmodel));
+		try {
+			response.getWriter().write(dataJson);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@RequestMapping("/getAlarms") // 根据集控器返回报警信息
+	public void getAlarms(HttpServletRequest request, HttpServletResponse response) {
+		response.setCharacterEncoding("UTF-8");
+		response.setContentType("application/json; charset=utf-8");
+		String userid = request.getParameter("userid");
+		String deviceMac = request.getParameter("deviceMac");
+		String page = request.getParameter("page");
+		String limit = request.getParameter("limit");
+		if (userid == null || page == null || limit == null || deviceMac == null) {
+			LayuiTableModel model = new LayuiTableModel();
+			model.setCode(2);
+			model.setMsg("Parameters cannot be null!");
+			try {
+				response.getWriter().write(JSONObject.toJSONString(model));
+				System.out.println(JSONObject.toJSONString(model));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return;
+		}
+		LayuiTableModel ltmodel = modelService.getAlarmMessageTableDataByUseridAndDevmac(Integer.parseInt(userid),
+				deviceMac, Integer.parseInt(page), Integer.parseInt(limit));
+		String dataJson = JSONObject.toJSONString(ltmodel);
+		try {
+			response.getWriter().write(dataJson);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 	}
 }

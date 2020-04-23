@@ -5,10 +5,8 @@
 		<id column="zigbee_mac" property="zigbeeMac" jdbcType="VARCHAR" />
 		<result column="zigbee_name" property="zigbeeName" jdbcType="VARCHAR" />
 		<result column="zigbee_net" property="zigbeeNet" jdbcType="INTEGER" />
-		<result column="zigbee_bright" property="zigbeeBright"
-			jdbcType="INTEGER" />
-		<result column="zigbee_status" property="zigbeeStatus"
-			jdbcType="INTEGER" />
+		<result column="zigbee_bright" property="zigbeeBright" jdbcType="INTEGER" />
+		<result column="zigbee_status" property="zigbeeStatus" jdbcType="INTEGER" />
 		<result column="zigbee_saddr" property="zigbeeSaddr" jdbcType="VARCHAR" />
 		<result column="dev_mac" property="devMac" jdbcType="VARCHAR" />
 	</resultMap>

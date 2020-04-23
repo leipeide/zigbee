@@ -22,9 +22,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.test.dao.PloyMapper;
 import com.test.dao.UserCmdMessageMapper;
+import com.test.domain.Alarm;
 import com.test.domain.DataObject;
 import com.test.domain.Device;
 import com.test.domain.Group;
@@ -199,8 +201,6 @@ public class UserController {
 					//2.返回英文登录界面
 					return "/jsp/login_en.jsp";
 				}
-				//return "/jsp/login.jsp";//原版(VUE)为登录页面为login.jsp
-				//return "/jsp/login_en.jsp";//页面重构(LAYUI)后登录页面为login_en.jsp
 			}
 		}
 		return null;
@@ -1565,7 +1565,62 @@ public class UserController {
 			//返回英文登录界面
 			return "/jsp/login_en.jsp";
 		}
-
 	}
+	
+	@RequestMapping("deleteAlarmMessage.do")//删除报警信息
+	public void deleteAlarmMessage(HttpServletRequest request, HttpServletResponse response) {
+		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
+		String alarmIdArr = request.getParameter("alarmIdArr");
+		String userid = request.getParameter("userid");
+		String[] alarmId = alarmIdArr.split(",");
+		
+		DataObject data = new DataObject();
+		data = userService.deleteAlarms(alarmId,Integer.parseInt(userid));
+
+		try {
+			response.getWriter().write(JSONObject.toJSONString(data));
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	
+	@RequestMapping("sendVerificationCode.do")//发送验证码
+	public void sendVerificationCode(HttpServletRequest request, HttpServletResponse response) {
+		String email = request.getParameter("email");
+		DataObject data = new DataObject();
+		response.setContentType("text/html;charset=utf-8");// 响应到前台为utf-8,防止出现中文乱码
+		data = userService.SendVerificationCodeByEmail(email);
+		try {
+			response.getWriter().write(JSONObject.toJSONString(data));
+			
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
+	@RequestMapping("findPassword.do")//找回密码
+	public void findPassword(HttpServletRequest request, HttpServletResponse response) {
+		// 响应到前台为utf-8,防止出现中文乱码
+		response.setContentType("text/html;charset=utf-8");
+		String email = request.getParameter("email");
+		String verCode = request.getParameter("verCode");
+		DataObject data = new DataObject();
+		data = userService.findUserPasswordByEmailAndCheckCode(email,verCode);
+		try {
+			response.getWriter().write(JSONObject.toJSONString(data));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	
 	
 }

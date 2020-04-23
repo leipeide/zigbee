@@ -2,24 +2,32 @@ package com.test.service.socket;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.alibaba.fastjson.JSONObject;
+import com.test.dao.AlarmMapper;
 import com.test.dao.DeviceAttrMapper;
+import com.test.dao.DeviceConnectRecordMapper;
 import com.test.dao.DeviceMapper;
 import com.test.dao.GroupMapper;
 import com.test.dao.GroupPairMapper;
 import com.test.dao.PloyMapper;
 import com.test.dao.PloyOperateMapper;
 import com.test.dao.UserCmdMessageMapper;
+import com.test.dao.UserMapper;
 import com.test.dao.ZigbeeAttrMapper;
 import com.test.dao.ZigbeeMapper;
 import com.test.dao.ZigbeeStatusRecordMapper;
+import com.test.domain.Alarm;
 import com.test.domain.Device;
 import com.test.domain.DeviceAttr;
+import com.test.domain.DeviceConnectRecord;
 import com.test.domain.Group;
 import com.test.domain.GroupPair;
 import com.test.domain.Ploy;
@@ -32,11 +40,14 @@ import com.test.service.IDeviceService;
 
 @Component
 public class SocketTool {
-
+	private static Logger log = Logger.getLogger("D");
+	
 	static public ArrayList<DeviceSocket> socketList = new ArrayList<>();
 	
 	static public Boolean HeartBeatReport = true;
-
+	
+	@Autowired
+	private UserMapper UserDao;
 	@Autowired
 	private IDeviceService devService;
 	@Autowired
@@ -59,7 +70,11 @@ public class SocketTool {
 	private UserCmdMessageMapper userCmdMessageDao;
 	@Autowired
 	private ZigbeeStatusRecordMapper ZigbeeStatusRecordDao;
-
+	@Autowired
+	private DeviceConnectRecordMapper DeviceConnectRecordDao;
+	@Autowired
+	private AlarmMapper AlarmDao;
+	
 	private Object UserCmdMessageDao;
 	
 	public static SocketTool testUtils;
@@ -70,7 +85,7 @@ public class SocketTool {
 	}
 
 	public static void test(Device record) {
-		System.out.println(testUtils.devDao);
+		//System.out.println(testUtils.devDao);
 	}
 	
 	public static boolean updateDeviceData(Device dev) {
@@ -262,7 +277,6 @@ public class SocketTool {
 					(cmdObj.getDevMac().equals(userCmdMessage.getDevMac())) &&
 					(cmdObj.getUserid() == userCmdMessage.getUserid()) &&
 					(cmdObj.getDate().getTime() - nowDate.getTime() < 1000*3)) { //<3000毫秒为避免客户在同一时间设置了两条定时指令
-				//System.out.println("数据完全相同，不插入数据");
 				
 			}else {//不存在相同指令，插入用户指令
 				 testUtils.userCmdMessageDao.insert(userCmdMessage); 
@@ -388,21 +402,30 @@ public class SocketTool {
 		Zigbee zigbee = SocketTool.selectZigbeeByPrimaryKey(strXML.substring(10, 26));
 		// 获取集控器上报的节点对象最新属性信息
 		ZigbeeAttr zigbeeAttr = SocketTool.selectZigbeeAttrByPrimaryKey(zigbee.getZigbeeMac());
-		//获取最后一条节点状态记录
-		ZigbeeStatusRecord lastRecord = testUtils.ZigbeeStatusRecordDao.selectLastRecored();
+		//获取该节点的最后一条节点状态记录
+		//ZigbeeStatusRecord lastRecord = testUtils.ZigbeeStatusRecordDao.selectLastRecored();
+		ZigbeeStatusRecord lastRecord = testUtils.ZigbeeStatusRecordDao.selectLastZigbeeStatusRecordByZigbeeMac(zigbee.getZigbeeMac());
+		//System.out.println("最后一条节点状态记录："+ lastRecord.getId());
 		if(lastRecord != null && zigbee != null && zigbeeAttr != null) { //节点状态最后一条记录存在且节点对象和节点属性对象存在
 			if(lastRecord.getRecordType().equals(lastRecord.RECORD_TYPE_UPDATE)) { //记录类型是update
 				//判断最后一条记录的内容石是否与集控器上报的节点类型一致
 				if((lastRecord.getDevMac().equals(zigbee.getDevMac())) && 
-						lastRecord.getZigbeeMac().equals(zigbee.getZigbeeMac()) && 
+						//lastRecord.getZigbeeMac().equals(zigbee.getZigbeeMac()) && 
 						(lastRecord.getZigbeeBright() == zigbee.getZigbeeBright()) && 
 						(lastRecord.getZigbeeStatus() == zigbee.getZigbeeStatus()) && 
 						(lastRecord.getTemperature() == zigbeeAttr.getTemperature()) && 
 						(lastRecord.getHumidity() == zigbeeAttr.getHumidity()) && 
 						(lastRecord.getPower() == zigbeeAttr.getPower()) 
 					){ 
+					/**
+					 * 节点上报的状态未发生改变，则不将节点的信息写入到节点状态记录数据表中 
+					 * 此处可以更新一下记录的最新时间；
+					 * 如果节点是true，则节点的状态未发生变化，只更新时间即可，可记录节点与服务器链接的最后时间
+					 */
+					Date nowTime = new Date();
+					lastRecord.setDate(nowTime);
+					testUtils.ZigbeeStatusRecordDao.updateLastRecordTime(lastRecord);
 					return true;
-					//节点上报的状态未发生改变，则不将节点的信息写入到节点状态记录数据表中 
 				}else { //节点上报的状态发生了变化，则将节点的信息写入到节点状态记录的数据表中
 					return false;
 				}
@@ -410,6 +433,127 @@ public class SocketTool {
 		}
 		return false;
 	}
+	/**
+	 * 集控器发送登陆指令时，集控器与服务器链接成功
+	 * 记录集控器与服务器连接记录，插入数据库内
+	 * @param device
+	 */
+	public static void insertDeviceConnectRecord(String devMac) {
+		//当前时间参数
+	    Date nowTime = new Date();
+		//得到集控器对象
+		Device device = testUtils.devDao.selectByPrimaryKey(devMac);
+		//向device_connect_record插入连接记录
+		DeviceConnectRecord devConnectRecord = new DeviceConnectRecord();
+		devConnectRecord.setDate(nowTime);
+		devConnectRecord.setDeviceMac(devMac);
+		devConnectRecord.setConnection(true);
+		devConnectRecord.setUserid(device.getUserid());
+		testUtils.DeviceConnectRecordDao.insert(devConnectRecord);
+		
+	}
+	/**
+	 * 集控器与服务器断开链接，线程关闭。
+	 * 记录集控器与服务器断开连接记录，插入数据库内
+	 * @param device
+	 */
+	public static void insertDeviceUnconnectRecord(String devMac) {
+		//当前时间参数
+	    Date nowTime = new Date();
+		//得到集控器对象
+		Device device = testUtils.devDao.selectByPrimaryKey(devMac);
+		//向device_connect_record插入连接记录
+		DeviceConnectRecord devConnectRecord = new DeviceConnectRecord();
+		devConnectRecord.setDate(nowTime);
+		devConnectRecord.setDeviceMac(devMac);
+		devConnectRecord.setConnection(false);
+		devConnectRecord.setUserid(device.getUserid());
+		testUtils.DeviceConnectRecordDao.insert(devConnectRecord);
+		
+	}
+	/**
+	 * 轮询超时报警判断函数，每一小时进行一次轮询超时报警
+	 * 集控器保持连接状态超过12h,则超时报警
+	 * @param deviceSocket
+	 */
+	public static void PollingAlarmFunction(
+		DeviceSocket deviceSocket,long AlarmTime) {//AlarmTime=12小时
+		String devMac = deviceSocket.getDevice().getDevMac();
+		String zigbeeMac = null;
+		ZigbeeStatusRecord zsr = null;
+		String alarmParam = null;  //报警参数
+		
+		if(devMac != null || devMac != "") { //集控器地址不为空
+		    //得到集控器对象
+			Device device = testUtils.devDao.selectByPrimaryKey(devMac);
+			//根据集控器地址查询该集控器最后一条连接服务器记录
+			DeviceConnectRecord dcr = 
+					testUtils.DeviceConnectRecordDao.selectLastConnectRecordByDeviceMac(devMac); 
+		    if (dcr != null && dcr.isConnection() == true) { //集控器连接记录不为空且是保持连接状态的
+			    Date date = new Date();
+			    //根据集控器地址查询该集控器记录的最后时间的一条节点状态记录
+			    zsr = testUtils.ZigbeeStatusRecordDao.selectLastZigbeeStatusRecordByDeviceMac(devMac); 
+				if (!zsr.getDevMac().equals("")) { // 2. 节点状态记录存在，判断回复时间是否已经超过12个小时。
+					if (date.getTime() - zsr.getDate().getTime() > AlarmTime
+							&& date.getTime() - dcr.getDate().getTime() > AlarmTime) {
+						List<Alarm> list = testUtils.
+								AlarmDao.selectByDeviceMacAndType(devMac, Alarm.ALARM_DISCONNECT);
+						// 如果数据库中没有相应的报警信息，生成报警信息，type = ALARM_DISCONNECT，存入数据库。
+						if (list.size() == 0) { //该集控器无报警
+							Alarm alarm = new Alarm(new Date(), devMac, zigbeeMac,
+									Alarm.ALARM_DISCONNECT, device.getUserid(), alarmParam);
+							testUtils.AlarmDao.insert(alarm);
+						}else {// 判断是否有相应的超时报警信息，如果有，删除
+							if (list.size() > 0) {
+								for(int i = 0; i < list.size(); i++) {
+									Alarm alarm = list.get(i);
+									testUtils.AlarmDao.deleteById(alarm.getId());
+								}
+								Alarm alarm = new Alarm(new Date(), devMac, zigbeeMac,
+										Alarm.ALARM_DISCONNECT, device.getUserid(), alarmParam);
+								testUtils.AlarmDao.insert(alarm);
+							}
+						}
+					}     
+				}else{
+					// 未查询到节点状态记录,如果集控器链接已超过12个小时，报警
+					if (date.getTime() - dcr.getDate().getTime() > AlarmTime) {
+						List<Alarm> list = testUtils.AlarmDao.selectByDeviceMacAndType(devMac, Alarm.ALARM_DISCONNECT);
+						// 如果数据库中没有相应的报警信息，生成报警信息，type = ALARM_DISCONNECT，存入数据库。
+						if (list.size() == 0) { //该集控器无报警
+							Alarm alarm = new Alarm(new Date(), devMac, zigbeeMac,
+									Alarm.ALARM_DISCONNECT, device.getUserid(), alarmParam);
+							testUtils.AlarmDao.insert(alarm);
+						}else {// 判断是否有相应的超时报警信息，如果有，删除
+							if (list.size() > 0) {
+								for(int i = 0; i < list.size(); i++) {
+									Alarm alarm = list.get(i);
+									testUtils.AlarmDao.deleteById(alarm.getId());
+								}
+								Alarm alarm = new Alarm(new Date(), devMac, zigbeeMac,
+										Alarm.ALARM_DISCONNECT, device.getUserid(), alarmParam);
+								testUtils.AlarmDao.insert(alarm);
+							}
+						}
+						
+					}	
+				}
+		    	
+		    }
+		}
+	
+	    
+	}
+	
+	//定时清空所有用户的验证码操作次数
+	public static void timingClearAllUserOperateNum() {
+		Integer operateNum = 0;
+		testUtils.UserDao.clearAllUserOperateNum(operateNum);
+		//log.info("定时清空用户的验证码操作次数");
+		
+	}
 
+	
+	
 
 }

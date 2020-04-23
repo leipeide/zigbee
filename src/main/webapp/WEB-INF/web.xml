@@ -55,6 +55,6 @@
 	</welcome-file-list> -->
 <!-- 	界面重构后，添加中英文语言环境，login2页面无法满足中英文语言环境；重新设置登录页面 -->
 	<welcome-file-list>
-		<welcome-file>jsp/login_en.jsp</welcome-file>
+ 		<welcome-file>jsp/login_en.jsp</welcome-file>
 	</welcome-file-list>
 </web-app>

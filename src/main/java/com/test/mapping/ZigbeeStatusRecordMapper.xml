@@ -31,8 +31,65 @@
     ,#{humidity,jdbcType=INTEGER},#{power,jdbcType=INTEGER},#{param1,jdbcType=VARCHAR},#{param2,jdbcType=VARCHAR}
     )
   </insert>
-   <select id="selectLastRecored" resultMap="BaseResultMap"
-		parameterType="java.lang.String">
-		select * from zigbee_status_record where id=(select max(id) from zigbee_status_record)
-	</select>
+  <select id="selectLastRecored" resultMap="BaseResultMap" parameterType="java.lang.String">
+	 select * from zigbee_status_record where id=(select max(id) from zigbee_status_record)
+  </select>
+  <update id="updateLastRecordTime" parameterType="com.test.domain.ZigbeeStatusRecord">
+		update zigbee_status_record
+		<set>
+			<if test="date != null">
+				date = #{date,jdbcType=TIMESTAMP},
+			</if>
+			<if test="recordType != null">
+				record_type = #{recordType,jdbcType=TIMESTAMP},
+			</if>
+			<if test="devMac != null">
+				dev_mac = #{devMac,jdbcType=TIMESTAMP},
+			</if>
+			<if test="zigbeeMac != null">
+				zigbee_mac = #{zigbeeMac,jdbcType=TIMESTAMP},
+			</if>
+			<if test="zigbeeBright != null">
+				zigbee_brightness = #{zigbeeBright,jdbcType=TIMESTAMP},
+			</if>
+			<if test="zigbeeStatus != null">
+				zigbee_status = #{zigbeeStatus,jdbcType=TIMESTAMP},
+			</if>
+			<if test="zigbeeType != null">
+				zigbee_type = #{zigbeeType,jdbcType=TIMESTAMP},
+			</if>
+			<if test="temperature != null">
+				temperature = #{temperature,jdbcType=TIMESTAMP},
+			</if>
+			<if test="humidity != null">
+				humidity = #{humidity,jdbcType=TIMESTAMP},
+			</if>
+			<if test="temperature != null">
+				temperature = #{temperature,jdbcType=TIMESTAMP},
+			</if>
+			<if test="power!= null">
+				power = #{power,jdbcType=TIMESTAMP},
+			</if>
+			<if test="param1 != null">
+				param1 = #{param1,jdbcType=TIMESTAMP},
+			</if>
+			<if test="param2 != null">
+				param2 = #{param2,jdbcType=TIMESTAMP},
+			</if>
+		</set>where id = #{id,jdbcType=INTEGER}
+	</update>
+	<select id="selectLastZigbeeStatusRecordByDeviceMac" resultMap="BaseResultMap" 
+		parameterType="java.lang.String"> 
+  		select
+		<include refid="Base_Column_List" />
+		from zigbee_status_record		
+		where dev_mac = #{devMac,jdbcType=VARCHAR} order by date DESC limit 1
+ 	</select>
+ 	<select id="selectLastZigbeeStatusRecordByZigbeeMac" resultMap="BaseResultMap" 
+ 		parameterType="java.lang.String"> 
+  		select
+		<include refid="Base_Column_List" />
+		from zigbee_status_record		
+		where zigbee_mac = #{zigbeeMac,jdbcType=VARCHAR} order by id DESC limit 1
+ 	</select>
 </mapper>

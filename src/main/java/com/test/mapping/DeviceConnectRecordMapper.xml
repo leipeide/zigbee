@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.test.dao.DeviceConnectRecordMapper" >
+  <resultMap id="BaseResultMap" type="com.test.domain.DeviceConnectRecord" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="date" property="date" jdbcType="TIMESTAMP" />
+    <result column="dev_mac" property="deviceMac" jdbcType="VARCHAR" />
+    <result column="connect" property="connection" jdbcType="BLOB" />
+    <result column="userid" property="userid" jdbcType="INTEGER" />
+    <result column="param1" property="param1" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+   id, date, dev_mac, connect, userid, param1
+  </sql>
+  <insert id="insert" parameterType="com.test.domain.DeviceConnectRecord" >
+   insert into device_connect_record (id, date, dev_mac, connect, userid, param1)
+   values (#{id,jdbcType=INTEGER}, #{date,jdbcType=TIMESTAMP}, #{deviceMac,jdbcType=VARCHAR},
+   	#{connection,jdbcType=BLOB}, #{userid,jdbcType=INTEGER}, #{param1,jdbcType=VARCHAR}
+   )
+  </insert>
+  <select id="selectLastConnectRecordByDeviceMac" resultMap="BaseResultMap"
+		parameterType="java.lang.String">
+  	select
+	<include refid="Base_Column_List" />
+	from device_connect_record		
+	where dev_mac = #{deviceMac,jdbcType=VARCHAR} order by id DESC limit 1
+  </select>
+<!--   select * from record where nodeAddr=? and deviceMac=? order by id DESC limit 1 -->
+</mapper>

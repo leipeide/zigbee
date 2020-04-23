@@ -12,6 +12,7 @@ public class DataObject {
 	private ArrayList<GroupPair> groupPairArr;
 	private ArrayList<Ploy> ployArr;
 	private ArrayList<PloyOperate> ployOperateArr;
+	private ArrayList<Alarm> alarm;
 	private String error;
 	public User getUser() {
 		return user;
@@ -73,14 +74,18 @@ public class DataObject {
 	public void setPloyOperateArr(ArrayList<PloyOperate> ployOperateArr) {
 		this.ployOperateArr = ployOperateArr;
 	}
+	public ArrayList<Alarm> getAlarm() {
+		return alarm;
+	}
+	public void setAlarm(ArrayList<Alarm> alarm) {
+		this.alarm = alarm;
+	}
 	@Override
 	public String toString() {
 		return "DataObject [user=" + user + ", devArr=" + devArr + ", devAttrArr=" + devAttrArr + ", zigbeeArr="
 				+ zigbeeArr + ", zigbeeAttrArr=" + zigbeeAttrArr + ", groupArr=" + groupArr + ", groupPairArr="
-				+ groupPairArr + ", ployArr=" + ployArr + ", ployOperateArr=" + ployOperateArr + ", error=" + error
-				+ "]";
+				+ groupPairArr + ", ployArr=" + ployArr + ", ployOperateArr=" + ployOperateArr + ", alarm=" + alarm
+				+ ", error=" + error + "]";
 	}
-	
-	
 	
 }

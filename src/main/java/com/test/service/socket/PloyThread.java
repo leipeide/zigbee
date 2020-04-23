@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.test.dao.UserCmdMessageMapper;
+import com.test.dao.UserMapper;
 import com.test.domain.Ploy;
 import com.test.domain.PloyOperate;
 import com.test.domain.UserCmdMessage;
@@ -23,42 +24,56 @@ public class PloyThread  extends TimerTask{
 	@Autowired
 	//按照注解注入
 	private UserCmdMessageMapper userCmdMessageDao;
+	@Autowired
+	//按照注解注入
+	private UserMapper userDao;
 	
 	@Override
 	public void run() {
 		// 0、获取当前UTC时间、时、分
 		currentTime = new Date();
 		long times = currentTime.getTime();
-//		times = currentTime.getTime() - ((long)p.getTimeZone() * 60 * 1000);// 获取时区偏移之后的时间
+		//times = currentTime.getTime() - ((long)p.getTimeZone() * 60 * 1000);// 获取时区偏移之后的时间
 		long hours = times /1000 / 60 / 60 % 24;
 		long minutes = times /1000 / 60 % 60;
+		//每天将用户验证码操作次数清零（北京时间2.30）
+		if(currentTime.getHours() == 2 && currentTime.getMinutes() == 30) {
+			SocketTool.timingClearAllUserOperateNum(); 
+			
+		}
+		
 		// 1、查询数据库ploy_table，获取正在运行的策略
-		ArrayList<Ploy> pList = SocketTool.selectPloyByStatus(1);
+		ArrayList<Ploy>pList = SocketTool.selectPloyByStatus(1);
 		// 2、根据正在运行的策略id，查询playOperate_table，获取到达操作时间的指令
 		ArrayList<PloyOperate> operateList;
-		for (Ploy p : pList) {
-			operateList = SocketTool.selectPloyOperateByPloyid(p.getId());
-			if (operateList != null) {
-				for (PloyOperate operate : operateList) {
-					if (operate.getHours() == hours && operate.getMinutes() == minutes) {// operate的定时时间到了
-						// 3、根据策略绑定的设备或分组，寻找到对应的socket端口号，发送指令。
-						if (p.getBindType() == 2) {// 3.1、如果bind_type == 2,绑定的是集控器mac地址
-							for (DeviceSocket ds : SocketTool.socketList) {
-								if (ds.getDevice().getDevMac() != null && ds.getDevice().getDevMac().equals(p.getBindData())) {//找到对应的socket线程
-									sendCmd(ds, operate, p);//发送指令
+		if(pList.size() > 0) { //有策略正在执行
+			for (Ploy p : pList) {
+				operateList = SocketTool.selectPloyOperateByPloyid(p.getId());
+				if (operateList != null) {
+					for (PloyOperate operate : operateList) {
+						if (operate.getHours() == hours && operate.getMinutes() == minutes) {// operate的定时时间到了
+							// 3、根据策略绑定的设备或分组，寻找到对应的socket端口号，发送指令。
+							if (p.getBindType() == 2) {// 3.1、如果bind_type == 2,绑定的是集控器mac地址
+								for (DeviceSocket ds : SocketTool.socketList) {
+									if (ds.getDevice().getDevMac() != null && ds.getDevice().getDevMac().equals(p.getBindData())) {//找到对应的socket线程
+										sendCmd(ds, operate, p);//发送指令
+									}
 								}
-							}
-						} else if (p.getBindType() == 1) {// 3.2、如果bind_type == 1,绑定的是分组id
-							for (DeviceSocket ds : SocketTool.socketList) {
-								if (ds.getDevice().getUserid() != null && ds.getDevice().getUserid().equals(p.getUserid())) {//找到对应用户的所有socket线程
-									sendCmd(ds, operate, p);//发送指令
+							} else if (p.getBindType() == 1) {// 3.2、如果bind_type == 1,绑定的是分组id
+								for (DeviceSocket ds : SocketTool.socketList) {
+									if (ds.getDevice().getUserid() != null && ds.getDevice().getUserid().equals(p.getUserid())) {//找到对应用户的所有socket线程
+										sendCmd(ds, operate, p);//发送指令
+									}
 								}
 							}
 						}
 					}
 				}
 			}
+		}else {
+			//无策略执行
 		}
+		
 	}
 	
 	/**

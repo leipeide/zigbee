@@ -5,12 +5,18 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import com.test.dao.DeviceConnectRecordMapper;
+import com.test.dao.UserMapper;
+import com.test.dao.ZigbeeStatusRecordMapper;
 import com.test.domain.DeviceAttr;
+import com.test.domain.DeviceConnectRecord;
 import com.test.domain.Group;
 import com.test.domain.GroupPair;
 import com.test.domain.UserCmdMessage;
@@ -25,7 +31,11 @@ import com.test.util.UnusualUtils;
  * @author zhangzhongwen
  * 
  */
-public class SocketOperate extends Thread {
+public class SocketOperate extends Thread {	
+	//超时报警判断的基准时间(12H)
+	private static long AlarmTime = 1000 * 60 * 60 * 12;
+	//轮询超时报警的时间
+	private static long QueryTime = 1000 * 60 * 60 ;
 	// 指令
 	// static private String cmd_setMac = "mac:";
 	private final static String READ_STATUS = "FE0969030200000A00CA040000";
@@ -142,7 +152,8 @@ public class SocketOperate extends Thread {
 		Date nowTime = new Date();
 		if(zbAttr != null) { //zbAttr存在
 			zbStatusRecord.setDate(nowTime);
-			zbStatusRecord.setDevMac(deviceSocket.getDevice().getDevMac());
+			zbStatusRecord.setDevMac(this.deviceSocket.getDevice().getDevMac());
+			//zbStatusRecord.setDevMac(deviceSocket.getDevice().getDevMac());
 			zbStatusRecord.setPower(zbAttr.getPower());
 			zbStatusRecord.setZigbeeBright(Integer.valueOf(strXML.substring(40, 42), 16));
 			zbStatusRecord.setZigbeeMac(zbAttr.getZigbeeMac());
@@ -163,7 +174,7 @@ public class SocketOperate extends Thread {
 			}
 		}else { //zbAttr不存在，节点的类型、功率、无法获取
 			zbStatusRecord.setDate(nowTime);
-			zbStatusRecord.setDevMac(deviceSocket.getDevice().getDevMac());
+			zbStatusRecord.setDevMac(this.deviceSocket.getDevice().getDevMac());
 			zbStatusRecord.setZigbeeBright(Integer.valueOf(strXML.substring(40, 42), 16));
 			zbStatusRecord.setZigbeeMac(strXML.substring(10, 26));
 			zbStatusRecord.setRecordType(zbStatusRecord.RECORD_TYPE_UPDATE); //记录类型是主动更新
@@ -223,8 +234,16 @@ public class SocketOperate extends Thread {
 				
 			}
 			
+
+			/*每1h轮询一次超时报警*/
+			new Timer().schedule(new TimerTask() {
+				public void run() {
+					SocketTool.PollingAlarmFunction(deviceSocket,AlarmTime);//超时报警判断函数
+				}
+			}, QueryTime, QueryTime);// 每1H轮询超时报警判断
 			
 			
+			/*************************************指令处理************************************/
 			while (/* deviceSocket.getSocket().isConnected() */true) {
 				// 读取客户端发送的信息
 				String strXML = "";
@@ -236,8 +255,7 @@ public class SocketOperate extends Thread {
 					dataPoint = 0;
 					strXML = new String(temp, 0, length);
 					dataFrameList.clear();
-					
-					///////// 以下为数据粘包处理，将包含多帧数据的的数据包拆开解析 ////////////
+					/* 以下为数据粘包处理，将包含多帧数据的的数据包拆开解析 */
 					while (dataPoint < length) {
 						if (length >= 52 + dataPoint && strXML.substring(dataPoint, 10 + dataPoint).equals("FE18690202")) {// 查询灯状态应答帧，长度52
 							dataFrameList.add(strXML.substring(dataPoint, dataPoint + 52));
@@ -280,8 +298,7 @@ public class SocketOperate extends Thread {
 						}
 					}
 					
-			  /*************************************指令处理程序*******************************/
-					
+					/*指令处理程序*/
 					for (int i = 0; i < dataFrameList.size(); i++) {
 						strXML = dataFrameList.get(i);	
 						log.info(deviceSocket.getDevice().getDevMac() + ": " + strXML);
@@ -306,8 +323,11 @@ public class SocketOperate extends Thread {
 									deviceSocket.getDevice().setDevNet(1);// 上线
 									SocketTool.updateDeviceData(deviceSocket.getDevice());// 更新数据库
 								}
+								//记录集控器与服务器链接记录
+								SocketTool.insertDeviceConnectRecord(deviceSocket.getDevice().getDevMac());
+								// 同步数据，主要是为了获取用户id
 								deviceSocket.setDevice(
-										SocketTool.selectDeviceByPrimaryKey(deviceSocket.getDevice().getDevMac()));// 同步数据，主要是为了获取用户id
+										SocketTool.selectDeviceByPrimaryKey(deviceSocket.getDevice().getDevMac()));
 								// 将上报mac地址之前连接到集控器的节点更新到数据库
 								for (Zigbee zb : zigbeePrematureList) {
 									zb.setDevMac(deviceSocket.getDevice().getDevMac());
@@ -1017,7 +1037,7 @@ public class SocketOperate extends Thread {
 											devAttr.setZigbeeFinder(1);
 											SocketTool.updateDeviceAttrByPrimaryKeySelective(devAttr);
 										}
-										// 开新定时器线程计时，超 seconds 计时后修改数据库状态为0
+										// 开新定时器线程计时，超1 seconds 计时后修改数据库状态为0
 										new Timer().schedule(new TimerTask() {
 											private DeviceAttr myDeviceAttr = devAttr;
 											public void run() {
@@ -1039,13 +1059,10 @@ public class SocketOperate extends Thread {
 						}
 					}//for循环
 					
-					
 				}//内层while
-				
-				
 				break;
-
 			}//外层while
+			
 
 		} catch (IOException ex) {
 
@@ -1062,15 +1079,16 @@ public class SocketOperate extends Thread {
 						if (ds.getDevice().getDevMac() != null
 								&& ds.getDevice().getDevMac().equals(deviceSocket.getDevice().getDevMac())) {
 							deviceSocket.getSocket().close();
-							System.out.println("socket stop......");
+							//System.out.println("socket stop......");
 							log.info("socket stop......");
 							return;
 						}
 					}
 					deviceSocket.getDevice().setDevNet(0);// 更新设备网络状态
 					SocketTool.updateDeviceData(deviceSocket.getDevice());// 更新数据库
+					SocketTool.insertDeviceUnconnectRecord(deviceSocket.getDevice().getDevMac());//记录集控器与服务器断开链接记录
 				}
-
+				//SocketTool.insertDeviceUnconnectRecord(deviceSocket.getDevice().getDevMac());//记录集控器与服务器断开链接记录
 				deviceSocket.getSocket().close();
 				log.info("socket stop......");
 			} catch (IOException e) {
@@ -1078,6 +1096,12 @@ public class SocketOperate extends Thread {
 				e.printStackTrace();
 			}
 		}
+		
+		
+		
+		
+		
+		
 	}
 
 	
